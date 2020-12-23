@@ -5,13 +5,15 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var appVersion = "0.0.dev_000000_33333"
+
 // RootCmd is the base of the cli
 var RootCmd = &cobra.Command{
 	Use:           "tfvet",
 	Short:         "tfvet is a Terraform linter",
 	SilenceUsage:  true, // Don't print the usage if we get an upstream error
 	SilenceErrors: true, // Let us handle error printing ourselves
-	Version:       "0.0.0",
+	Version:       appVersion,
 }
 
 func init() {
