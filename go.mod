@@ -12,6 +12,7 @@ require (
 	github.com/mattn/go-runewidth v0.0.9 // indirect
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/otiai10/copy v1.4.0
+	github.com/rs/zerolog v1.20.0
 	github.com/spf13/cobra v1.1.1
 	github.com/theckman/yacspin v0.8.0
 	github.com/ulikunitz/xz v0.5.8 // indirect

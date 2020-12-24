@@ -18,6 +18,9 @@ var RootCmd = &cobra.Command{
 
 func init() {
 	RootCmd.AddCommand(ruleset.CmdRuleset)
+
+	RootCmd.PersistentFlags().StringP("format", "f", "pretty",
+		"output format; accepted values are 'pretty', 'json', and, 'plain'")
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.

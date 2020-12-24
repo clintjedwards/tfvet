@@ -41,8 +41,8 @@ type state struct {
 }
 
 // newState returns a new state object with the fmt initialized
-func newState(initialFmtMsg string) (*state, error) {
-	clifmt, err := formatter.Init(initialFmtMsg)
+func newState(initialFmtMsg, format string) (*state, error) {
+	clifmt, err := formatter.New(initialFmtMsg, formatter.Mode(format))
 	if err != nil {
 		return nil, err
 	}
@@ -100,13 +100,17 @@ func (s *state) getTerraformFiles(paths []string) ([]string, error) {
 
 func runLint(cmd *cobra.Command, args []string) error {
 
+	format, err := cmd.Flags().GetString("format")
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	//TODO(clintjedwards): Make sure all of these report errors correctly
-	state, err := newState("Running Linter")
+	state, err := newState("Running Linter", format)
 	if err != nil {
 		return err
 	}
 
-	//state.fmt.PrintMsg("testing")
 	paths, err := cmd.Flags().GetStringSlice("path")
 	if err != nil {
 		return err

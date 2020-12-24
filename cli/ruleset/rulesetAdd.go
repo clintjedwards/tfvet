@@ -65,8 +65,9 @@ type state struct {
 }
 
 // newState returns a new state object with the fmt initialized
-func newState(initialFmtMsg string) (*state, error) {
-	clifmt, err := formatter.Init(initialFmtMsg)
+func newState(initialFmtMsg, format string) (*state, error) {
+
+	clifmt, err := formatter.New(initialFmtMsg, formatter.Mode(format))
 	if err != nil {
 		return nil, err
 	}
@@ -341,7 +342,12 @@ func buildRule(srcPath, dstPath string) ([]byte, error) {
 func runAdd(cmd *cobra.Command, args []string) error {
 	repoLocation := args[0]
 
-	state, err := newState("Adding ruleset")
+	format, err := cmd.Flags().GetString("format")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	state, err := newState("Adding ruleset", format)
 	if err != nil {
 		log.Println(err)
 		return err

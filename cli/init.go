@@ -2,6 +2,7 @@ package cli
 
 import (
 	"fmt"
+	"log"
 	"strings"
 
 	"github.com/clintjedwards/tfvet/cli/formatter"
@@ -26,7 +27,12 @@ It does two important things:
 }
 
 func runInit(cmd *cobra.Command, args []string) error {
-	clifmt, err := formatter.Init("Initializing")
+	format, err := cmd.Flags().GetString("format")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	clifmt, err := formatter.New("Initializing", formatter.Mode(format))
 	if err != nil {
 		clifmt.PrintFinalError(fmt.Sprintf("could not create tfvet dirs: %v", err))
 		return err
