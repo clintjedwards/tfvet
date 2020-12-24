@@ -86,6 +86,10 @@ PLUGIN_DIR
 * Add the check for the conf file at the start of every command(maybe not all of them I dunno)--remove the init
 * WE make a rules directory so that we don't mistakenly get caught up in any helper directories, make sure to mention that is why the repo rules directory exists
 * We can optionally have the user use a pager for extremely large outputs
+* Add the ability to lock versions via some sort of syntax
+
+//TODO(clintjedwards): Fix error reporting everywhere
+//TODO(clintjedwards): Do a full testing run
 
 FAQ:
 

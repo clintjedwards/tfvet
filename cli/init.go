@@ -5,8 +5,8 @@ import (
 	"log"
 	"strings"
 
+	"github.com/clintjedwards/tfvet/cli/appcfg"
 	"github.com/clintjedwards/tfvet/cli/formatter"
-	"github.com/clintjedwards/tfvet/cli/tfvetcfg"
 	"github.com/clintjedwards/tfvet/utils"
 	"github.com/spf13/cobra"
 )
@@ -41,7 +41,7 @@ func runInit(cmd *cobra.Command, args []string) error {
 	//TODO(clintjedwards): omit the created if it already exists
 
 	// Create directories
-	directories := []string{tfvetcfg.ConfigDir, tfvetcfg.RulesetsDir}
+	directories := []string{appcfg.ConfigPath(), appcfg.RulesetsPath()}
 	clifmt.PrintMsg(fmt.Sprintf("Creating directories: %s", strings.Join(directories, ", ")))
 
 	err = utils.CreateDirectories(directories...)
@@ -57,12 +57,12 @@ func runInit(cmd *cobra.Command, args []string) error {
 	// Create configuration files
 	clifmt.PrintMsg("Creating config files")
 
-	err = tfvetcfg.CreateNewFile()
+	err = appcfg.CreateNewFile()
 	if err != nil {
 		clifmt.PrintFinalError(fmt.Sprintf("could not write tfvet config: %v", err))
 		return err
 	}
-	clifmt.PrintSuccess(fmt.Sprintf("%q created", tfvetcfg.ConfigFilePath))
+	clifmt.PrintSuccess(fmt.Sprintf("%q created", appcfg.ConfigFilePath()))
 
 	clifmt.PrintFinalSuccess("init finished!")
 	return nil

@@ -13,8 +13,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/clintjedwards/tfvet/cli/appcfg"
 	"github.com/clintjedwards/tfvet/cli/formatter"
-	"github.com/clintjedwards/tfvet/cli/tfvetcfg"
 	tfvetPlugin "github.com/clintjedwards/tfvet/plugin"
 	"github.com/clintjedwards/tfvet/plugin/proto"
 	"github.com/clintjedwards/tfvet/utils"
@@ -37,7 +37,7 @@ directory by default.
 // just for convenience.
 type state struct {
 	fmt *formatter.Formatter
-	cfg *tfvetcfg.TfvetConfig
+	cfg *appcfg.Appcfg
 }
 
 // newState returns a new state object with the fmt initialized
@@ -47,12 +47,12 @@ func newState(initialFmtMsg, format string) (*state, error) {
 		return nil, err
 	}
 
-	cfg, err := tfvetcfg.GetConfig()
+	cfg, err := appcfg.GetConfig()
 	if err != nil {
 		//TODO(clintjedwards): Make sure to pass an actual error here we can check against
 		// to explicitly say that config file does not exist
 		errText := fmt.Sprintf("config file `%s` does not exist."+
-			" Run `tfvet init` to create.", tfvetcfg.ConfigFilePath)
+			" Run `tfvet init` to create.", appcfg.ConfigFilePath)
 		clifmt.PrintFinalError(errText)
 		return nil, errors.New(errText)
 	}
@@ -169,7 +169,7 @@ func (s *state) lintFile(file *os.File) error {
 		return err
 	}
 
-	rulesets := s.cfg.GetRulesets()
+	rulesets := s.cfg.Rulesets
 
 	for _, ruleset := range rulesets {
 		s.fmt.PrintMsg(fmt.Sprintf("Linting %s: Ruleset %s", file.Name(), ruleset.Name))
@@ -189,9 +189,7 @@ func (s *state) lintFile(file *os.File) error {
 	return nil
 }
 
-func (s *state) runRule(ruleset string, rule tfvetcfg.Rule, filepath string, rawHCLFile []byte) error {
-	rulesPath := tfvetcfg.RulesetsDir + "/" + ruleset
-	finalPath := rulesPath + "/" + rule.FileName
+func (s *state) runRule(ruleset string, rule appcfg.Rule, filepath string, rawHCLFile []byte) error {
 	tmpPluginName := "tfvetPlugin"
 
 	client := plugin.NewClient(&plugin.ClientConfig{
@@ -199,7 +197,7 @@ func (s *state) runRule(ruleset string, rule tfvetcfg.Rule, filepath string, raw
 		Plugins: map[string]plugin.Plugin{
 			tmpPluginName: &tfvetPlugin.TfvetRulePlugin{},
 		},
-		Cmd: exec.Command(finalPath),
+		Cmd: exec.Command(appcfg.RulePath(ruleset, rule.FileName)),
 		Logger: hclog.New(&hclog.LoggerOptions{
 			Output: ioutil.Discard,
 			Level:  0,

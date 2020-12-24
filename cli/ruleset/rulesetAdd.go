@@ -10,8 +10,8 @@ import (
 	"os/exec"
 	"time"
 
+	"github.com/clintjedwards/tfvet/cli/appcfg"
 	"github.com/clintjedwards/tfvet/cli/formatter"
-	"github.com/clintjedwards/tfvet/cli/tfvetcfg"
 	tfvetPlugin "github.com/clintjedwards/tfvet/plugin"
 	"github.com/clintjedwards/tfvet/plugin/proto"
 	"github.com/clintjedwards/tfvet/utils"
@@ -61,7 +61,7 @@ type rulesetInfo struct {
 // just for convenience.
 type state struct {
 	fmt *formatter.Formatter
-	cfg *tfvetcfg.TfvetConfig
+	cfg *appcfg.Appcfg
 }
 
 // newState returns a new state object with the fmt initialized
@@ -72,12 +72,10 @@ func newState(initialFmtMsg, format string) (*state, error) {
 		return nil, err
 	}
 
-	cfg, err := tfvetcfg.GetConfig()
+	cfg, err := appcfg.GetConfig()
 	if err != nil {
-		//TODO(clintjedwards): Make sure to pass an actual error here we can check against
-		// to explicitly say that config file does not exist
 		errText := fmt.Sprintf("config file `%s` does not exist."+
-			" Run `tfvet init` to create.", tfvetcfg.ConfigFilePath)
+			" Run `tfvet init` to create.", appcfg.ConfigFilePath())
 		clifmt.PrintFinalError(errText)
 		return nil, errors.New(errText)
 	}
@@ -95,7 +93,7 @@ func newState(initialFmtMsg, format string) (*state, error) {
 func (s *state) getRuleset(location string) (string, error) {
 	s.fmt.PrintMsg(fmt.Sprintf("Retrieving %s", location))
 
-	tmpDownloadPath := fmt.Sprintf("%s/%s", os.TempDir(), utils.GenerateRandString(5))
+	tmpDownloadPath := fmt.Sprintf("%s/tfvet_%s", os.TempDir(), utils.GenerateRandString(5))
 	_, err := getter.Get(context.Background(), tmpDownloadPath, location)
 	if err != nil {
 		errText := fmt.Sprintf("could not download ruleset: %v", err)
@@ -165,16 +163,14 @@ func (s *state) moveRepo(ruleset, tmpPath string) error {
 	//TODO(clintjedwards): check that the location doesn't already exist. If it does simply remove
 	//it
 
-	err := utils.CreateDirectories(fmt.Sprintf("%s/%s", tfvetcfg.RulesetsDir, ruleset))
+	err := utils.CreateDirectories(appcfg.RulesetPath(ruleset))
 	if err != nil {
 		errText := fmt.Sprintf("could not create parent directory: %v", err)
 		s.fmt.PrintFinalError(errText)
 		return errors.New(errText)
 	}
 
-	repoPath := fmt.Sprintf("%s/%s/%s", tfvetcfg.RulesetsDir, ruleset, tfvetcfg.RepoDirName)
-
-	err = copy.Copy(tmpPath, repoPath)
+	err = copy.Copy(tmpPath, appcfg.RepoPath(ruleset))
 	if err != nil {
 		errText := fmt.Sprintf("could not copy ruleset to config directory: %v", err)
 		s.fmt.PrintFinalError(errText)
@@ -186,10 +182,6 @@ func (s *state) moveRepo(ruleset, tmpPath string) error {
 	return nil
 }
 
-//TODO(clintjedwards): Provide a package which handles all of these fmt.Sprintf's such that we
-// don't have to keep creating within functions and we can just call a function to provide the
-// correct on disk location.
-
 //TODO(clintjedwards): When you hit a rule you can't build continue to other rules
 // if 3 built rules fail in a row, there is a bigger problem and we should return immediately
 //
@@ -197,10 +189,7 @@ func (s *state) moveRepo(ruleset, tmpPath string) error {
 func (s *state) buildRulesetRules(ruleset string) error {
 	s.fmt.PrintMsg("Opening rules directory")
 
-	repoPath := fmt.Sprintf("%s/%s/%s", tfvetcfg.RulesetsDir, ruleset, tfvetcfg.RepoDirName)
-	rulesPath := fmt.Sprintf("%s/%s", repoPath, tfvetcfg.RulesDirName)
-
-	file, err := os.Open(rulesPath)
+	file, err := os.Open(appcfg.RepoRulesPath(ruleset))
 	if err != nil {
 		errText := fmt.Sprintf("could not open rules folder: %v", err)
 		s.fmt.PrintFinalError(errText)
@@ -218,6 +207,8 @@ func (s *state) buildRulesetRules(ruleset string) error {
 	startTime := time.Now()
 	count := 0
 
+	// Rules are separated into directories. We iterate through directories and build whats inside
+	// them.
 	for _, file := range fileList {
 		if !file.IsDir() {
 			continue
@@ -225,9 +216,9 @@ func (s *state) buildRulesetRules(ruleset string) error {
 
 		s.fmt.PrintMsg(fmt.Sprintf("Compiling %s", file.Name()))
 
-		rulePath := fmt.Sprintf("%s/%s", rulesPath, file.Name())
-		finalPath := tfvetcfg.RulesetsDir + "/" + ruleset + "/" + file.Name()
-		_, err := buildRule(rulePath, finalPath)
+		rawRulePath := fmt.Sprintf("%s/%s", appcfg.RepoRulesPath(ruleset), file.Name())
+
+		_, err := buildRule(rawRulePath, appcfg.RulePath(ruleset, file.Name()))
 		if err != nil {
 			errText := fmt.Sprintf("could not build rule %s: %v", file.Name(), err)
 			s.fmt.PrintFinalError(errText)
@@ -252,8 +243,6 @@ func (s *state) buildRulesetRules(ruleset string) error {
 }
 
 func (s *state) getRuleInfo(ruleset, rule string) error {
-	rulesPath := tfvetcfg.RulesetsDir + "/" + ruleset
-	finalPath := rulesPath + "/" + rule
 	tmpPluginName := "tfvetPlugin"
 
 	s.fmt.PrintMsg(fmt.Sprintf("Collecting rule info for: %s", rule))
@@ -263,7 +252,7 @@ func (s *state) getRuleInfo(ruleset, rule string) error {
 		Plugins: map[string]plugin.Plugin{
 			tmpPluginName: &tfvetPlugin.TfvetRulePlugin{},
 		},
-		Cmd: exec.Command(finalPath),
+		Cmd: exec.Command(appcfg.RulePath(ruleset, rule)),
 		Logger: hclog.New(&hclog.LoggerOptions{
 			Output: ioutil.Discard,
 			Level:  0,
@@ -302,7 +291,7 @@ func (s *state) getRuleInfo(ruleset, rule string) error {
 		return errors.New(errText)
 	}
 
-	err = s.cfg.AddRule(ruleset, tfvetcfg.Rule{
+	err = s.cfg.AddRule(ruleset, appcfg.Rule{
 		FileName: rule,
 		Name:     response.RuleInfo.Name,
 		Short:    response.RuleInfo.Short,
@@ -375,7 +364,7 @@ func runAdd(cmd *cobra.Command, args []string) error {
 	}
 
 	state.fmt.PrintMsg("Adding ruleset to config")
-	state.cfg.AddRuleset(tfvetcfg.Ruleset{
+	state.cfg.AddRuleset(appcfg.Ruleset{
 		Name:       info.Name,
 		Version:    info.Version,
 		Repository: repoLocation,
