@@ -90,6 +90,8 @@ PLUGIN_DIR
 
 //TODO(clintjedwards): Fix error reporting everywhere
 //TODO(clintjedwards): Do a full testing run
+//TODO(clintjedwards): Before passing the file to the plugins make sure it compiles/parses
+//TODO(clintjedwards): Only run rules which are enabled in the cfg
 
 FAQ:
 

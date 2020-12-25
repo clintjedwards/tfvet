@@ -31,6 +31,7 @@ var cmdLint = &cobra.Command{
 directory by default.
 `,
 	RunE: runLint,
+	Args: cobra.MaximumNArgs(0),
 }
 
 // state contains a bunch of useful state information for the add cli function. This is mostly
@@ -52,7 +53,7 @@ func newState(initialFmtMsg, format string) (*state, error) {
 		//TODO(clintjedwards): Make sure to pass an actual error here we can check against
 		// to explicitly say that config file does not exist
 		errText := fmt.Sprintf("config file `%s` does not exist."+
-			" Run `tfvet init` to create.", appcfg.ConfigFilePath)
+			" Run `tfvet init` to create.", appcfg.ConfigFilePath())
 		clifmt.PrintFinalError(errText)
 		return nil, errors.New(errText)
 	}
@@ -105,7 +106,6 @@ func runLint(cmd *cobra.Command, args []string) error {
 		log.Fatal(err)
 	}
 
-	//TODO(clintjedwards): Make sure all of these report errors correctly
 	state, err := newState("Running Linter", format)
 	if err != nil {
 		return err
@@ -241,25 +241,12 @@ func (s *state) runRule(ruleset string, rule appcfg.Rule, filepath string, rawHC
 
 	lintErrs := response.Errors
 	for _, lintError := range lintErrs {
-		_ = lintError
-		s.fmt.PrintError("Error", strings.ToLower(rule.Short))
-		//TODO(clintjedwards): Wrap these with the formatter
-		///https://blog.rust-lang.org/2016/08/10/Shape-of-errors-to-come.html
-		fmt.Printf(" --> %s:%d:%d\n", filepath, lintError.Location.Start.Line, lintError.Location.Start.Column)
-		line, lineNum, err := utils.ReadLine(bytes.NewBuffer(rawHCLFile), int(lintError.Location.Start.Line))
+		line, _, err := utils.ReadLine(bytes.NewBuffer(rawHCLFile), int(lintError.Location.Start.Line))
 		if err != nil {
-			panic(err)
+			return errors.New("could not get line from file")
 		}
-		//TODO(clintjedwards): format this as a table
-		fmt.Printf("%s|\n", strings.Join(spacer(lineNum), ""))
-		fmt.Printf("%d | %s\n", lineNum, line)
-		fmt.Printf("%s|\n", strings.Join(spacer(lineNum), ""))
-		fmt.Printf("%s|\n", strings.Join(spacer(lineNum), ""))
-		fmt.Printf(" = additional information:\n")
-		fmt.Printf("   • rule: %s\n", rule.FileName)
-		fmt.Printf("   • link: %s\n", rule.Link)
-		fmt.Printf("   • long: tfvet rule describe %s %s\n", ruleset, rule.FileName)
-		fmt.Println()
+
+		s.fmt.PrintLintError(filepath, line, ruleset, rule, lintError)
 	}
 
 	return err

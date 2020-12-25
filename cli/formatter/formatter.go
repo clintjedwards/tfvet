@@ -121,6 +121,27 @@ func (f *Formatter) PrintMsg(msg string) {
 	log.Info().Msg(msg)
 }
 
+// PrintStandaloneMsg displays a message unattached to the spinner.
+// In pretty mode this causes the spinner to first stop, print the message, and then immediately
+// start a new spinner.
+func (f *Formatter) PrintStandaloneMsg(msg string) {
+	if f.mode == Pretty {
+		f.spinner.Suffix("")
+		f.spinner.StopCharacter("")
+		f.spinner.Stop()
+		fmt.Printf(msg)
+		newSpinner, err := newSpinner(f.config)
+		if err != nil {
+			log.Fatal().Err(err).Msg("could not init new spinner")
+		}
+
+		f.spinner = newSpinner
+		return
+	}
+
+	log.Info().Msg(msg)
+}
+
 // PrintError displays an error. Pretty mode it will cause it to print the message replacing the
 // current suffix and immediately start a new spinner.
 func (f *Formatter) PrintError(suffix, msg string) {

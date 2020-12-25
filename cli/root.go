@@ -9,11 +9,16 @@ var appVersion = "0.0.dev_000000_33333"
 
 // RootCmd is the base of the cli
 var RootCmd = &cobra.Command{
-	Use:           "tfvet",
-	Short:         "tfvet is a Terraform linter",
-	SilenceUsage:  true, // Don't print the usage if we get an upstream error
-	SilenceErrors: true, // Let us handle error printing ourselves
-	Version:       appVersion,
+	Use:   "tfvet",
+	Short: "tfvet is a Terraform linter",
+	PersistentPreRun: func(cmd *cobra.Command, args []string) {
+		// including these in the pre run hook instead of in the enclosing command function
+		// allows cobra to still print errors and usage for its own cli verifications, but
+		// ignore our errors.
+		cmd.SilenceUsage = true  // Don't print the usage if we get an upstream error
+		cmd.SilenceErrors = true // Let us handle error printing ourselves
+	},
+	Version: appVersion,
 }
 
 func init() {
