@@ -49,8 +49,6 @@ func newState(initialFmtMsg, format string) (*state, error) {
 
 	cfg, err := appcfg.GetConfig()
 	if err != nil {
-		//TODO(clintjedwards): Make sure to pass an actual error here we can check against
-		// to explicitly say that config file does not exist
 		errText := fmt.Sprintf("config file `%s` does not exist."+
 			" Run `tfvet init` to create.", appcfg.ConfigFilePath())
 		clifmt.PrintFinalError(errText)
@@ -71,6 +69,10 @@ func (s *state) getTerraformFiles(paths []string) ([]string, error) {
 	tfFiles := []string{}
 
 	for _, path := range paths {
+
+		//TODO(clintjedwards): You don't have to always glob with a *
+		// instead we should check for at least two slashes here
+		// and take the last slash off and check the contents of the first slash
 		// we trim the star if included so that we can check if the path exists.
 		baseDir := strings.TrimSuffix(path, "*")
 		_, err := os.Stat(baseDir)
@@ -80,10 +82,17 @@ func (s *state) getTerraformFiles(paths []string) ([]string, error) {
 			return nil, errors.New(errText)
 		}
 
+		// Get full path for file
+		path, err := filepath.Abs(path)
+		if err != nil {
+			errText := fmt.Sprintf("could not parse path %s", path)
+			s.fmt.PrintFinalError(errText)
+			return nil, errors.New(errText)
+		}
+
 		globFiles, err := filepath.Glob(path)
 		if err != nil {
-			fmt.Println(globFiles)
-			errText := fmt.Sprintf("could not parse path %s", path)
+			errText := fmt.Sprintf("could match on glob pattern %s", path)
 			s.fmt.PrintFinalError(errText)
 			return nil, errors.New(errText)
 		}
@@ -118,6 +127,11 @@ func runLint(cmd *cobra.Command, args []string) error {
 	files, err := state.getTerraformFiles(paths)
 	if err != nil {
 		return err
+	}
+
+	if len(files) == 0 {
+		state.fmt.PrintFinalError("No terraform files found")
+		return errors.New("No terraform files found")
 	}
 
 	startTime := time.Now()

@@ -92,6 +92,8 @@ PLUGIN_DIR
 //TODO(clintjedwards): Do a full testing run
 //TODO(clintjedwards): Before passing the file to the plugins make sure it compiles/parses
 //TODO(clintjedwards): Only run rules which are enabled in the cfg
+//TODO(clintjedwards): We should provide a way to take input from stdin, so you can pass it
+// parts of files instead of having to read directly from files
 
 FAQ:
 
