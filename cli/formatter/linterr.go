@@ -8,7 +8,17 @@ import (
 	"github.com/clintjedwards/tfvet/cli/appcfg"
 	"github.com/clintjedwards/tfvet/plugin/proto"
 	"github.com/olekukonko/tablewriter"
+	"github.com/rs/zerolog/log"
 )
+
+// LintErrorDetails is a harness for all the details that go into a lint error
+type LintErrorDetails struct {
+	Filepath string
+	Line     string
+	Ruleset  string
+	Rule     appcfg.Rule
+	LintErr  *proto.RuleError
+}
 
 // PrintLintError formats and prints details from a lint error.
 //
@@ -29,18 +39,32 @@ x Error: lolwut is inherently unsafe; see link for more details
   • link: http://lolwut.com/
   • long: tfvet rule describe example resource_should_not_contain_attr_lolwut
 */
-//TODO(clintjedwards): Remove all params and include them into a harness instead
-func (f *Formatter) PrintLintError(filepath, line, ruleset string, rule appcfg.Rule, lintErr *proto.RuleError) {
-	// First notify the user of an error and print the short error description.
-	f.PrintError("Error", strings.ToLower(rule.Short))
-	// Next print the filename along with the starting line and column
-	f.PrintStandaloneMsg(fmt.Sprintf("  --> %s:%d:%d\n",
-		filepath, lintErr.Location.Start.Line, lintErr.Location.Start.Column))
-	// Next pretty print the error line
-	f.PrintStandaloneMsg(formatLineTable(line, int(lintErr.Location.Start.Line)))
-	f.PrintStandaloneMsg("  = additional information:\n")
-	f.PrintStandaloneMsg(formatAdditionalInfo(ruleset, rule))
-	f.PrintStandaloneMsg("\n")
+func (f *Formatter) PrintLintError(details LintErrorDetails) {
+	if f.mode == Pretty {
+		// First notify the user of an error and print the short error description.
+		f.PrintError("Error", strings.ToLower(details.Rule.Short))
+		// Next print the filename along with the starting line and column
+		f.PrintStandaloneMsg(fmt.Sprintf("  --> %s:%d:%d\n",
+			details.Filepath, details.LintErr.Location.Start.Line, details.LintErr.Location.Start.Column))
+		// Next pretty print the error line
+		f.PrintStandaloneMsg(formatLineTable(details.Line, int(details.LintErr.Location.Start.Line)))
+		f.PrintStandaloneMsg("  = additional information:\n")
+		f.PrintStandaloneMsg(formatAdditionalInfo(details.Ruleset, details.Rule))
+		f.PrintStandaloneMsg("\n")
+		return
+	}
+
+	log.Error().
+		Str("type", "linterror").
+		Str("name", details.Rule.FileName).
+		Str("short", details.Rule.Short).
+		Str("link", details.Rule.Link).
+		Str("line", details.Line).
+		Int("start_line", int(details.LintErr.Location.Start.Line)).
+		Int("start_col", int(details.LintErr.Location.Start.Column)).
+		Int("end_line", int(details.LintErr.Location.End.Line)).
+		Int("end_col", int(details.LintErr.Location.End.Column)).
+		Msg("")
 }
 
 // formatLineTable returns a pretty printed string of an error line

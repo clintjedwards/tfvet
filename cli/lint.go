@@ -9,7 +9,6 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"strconv"
 	"strings"
 	"time"
 
@@ -176,11 +175,10 @@ func (s *state) lintFile(file *os.File) error {
 
 		for _, rule := range ruleset.Rules {
 			s.fmt.PrintMsg(fmt.Sprintf("Linting %s: Ruleset %s - Rule %s",
-				file.Name(), ruleset.Name, rule.Name))
+				file.Name(), ruleset.Name, strings.ToLower(rule.Name)))
 
 			err := s.runRule(ruleset.Name, rule, file.Name(), contents)
 			if err != nil {
-				//TODO(clintjedwards): proper errors
 				return err
 			}
 		}
@@ -246,23 +244,16 @@ func (s *state) runRule(ruleset string, rule appcfg.Rule, filepath string, rawHC
 			return errors.New("could not get line from file")
 		}
 
-		s.fmt.PrintLintError(filepath, line, ruleset, rule, lintError)
+		s.fmt.PrintLintError(formatter.LintErrorDetails{
+			Filepath: filepath,
+			Line:     line,
+			Ruleset:  ruleset,
+			Rule:     rule,
+			LintErr:  lintError,
+		})
 	}
 
 	return err
-}
-
-//TODO(clintjedwards): get rid of this in favor if just drawing it as a simple table
-func spacer(digit int) []string {
-	spaces := []string{}
-
-	length := len(strconv.Itoa(digit))
-
-	for i := 1; i < length+2; i++ {
-		spaces = append(spaces, " ")
-	}
-
-	return spaces
 }
 
 func init() {
