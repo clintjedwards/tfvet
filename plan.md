@@ -94,6 +94,7 @@ PLUGIN_DIR
 //TODO(clintjedwards): Only run rules which are enabled in the cfg
 //TODO(clintjedwards): We should provide a way to take input from stdin, so you can pass it
 // parts of files instead of having to read directly from files
+//TODO(clintjedwards): Make sure things are being passed correctly to stdout and stderr
 
 FAQ:
 

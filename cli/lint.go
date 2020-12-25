@@ -19,6 +19,7 @@ import (
 	"github.com/clintjedwards/tfvet/utils"
 	"github.com/hashicorp/go-hclog"
 	"github.com/hashicorp/go-plugin"
+	"github.com/mitchellh/go-homedir"
 	"github.com/spf13/cobra"
 )
 
@@ -70,26 +71,31 @@ func (s *state) getTerraformFiles(paths []string) ([]string, error) {
 
 	for _, path := range paths {
 
-		//TODO(clintjedwards): You don't have to always glob with a *
-		// instead we should check for at least two slashes here
-		// and take the last slash off and check the contents of the first slash
-		// we trim the star if included so that we can check if the path exists.
-		baseDir := strings.TrimSuffix(path, "*")
-		_, err := os.Stat(baseDir)
-		if err != nil {
-			errText := fmt.Sprintf("could not open path: %v", err)
-			s.fmt.PrintFinalError(errText)
-			return nil, errors.New(errText)
-		}
-
-		// Get full path for file
-		path, err := filepath.Abs(path)
+		// Resolve home directory
+		path, err := homedir.Expand(path)
 		if err != nil {
 			errText := fmt.Sprintf("could not parse path %s", path)
 			s.fmt.PrintFinalError(errText)
 			return nil, errors.New(errText)
 		}
 
+		// Get full path for file
+		path, err = filepath.Abs(path)
+		if err != nil {
+			errText := fmt.Sprintf("could not parse path %s", path)
+			s.fmt.PrintFinalError(errText)
+			return nil, errors.New(errText)
+		}
+
+		// Check that the path exists
+		_, err = os.Stat(filepath.Dir(path))
+		if err != nil {
+			errText := fmt.Sprintf("could not open path: %v", err)
+			s.fmt.PrintFinalError(errText)
+			return nil, errors.New(errText)
+		}
+
+		// Return all terraform files
 		globFiles, err := filepath.Glob(path)
 		if err != nil {
 			errText := fmt.Sprintf("could match on glob pattern %s", path)
