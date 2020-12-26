@@ -19,19 +19,22 @@ import (
 	"github.com/clintjedwards/tfvet/utils"
 	"github.com/hashicorp/go-hclog"
 	"github.com/hashicorp/go-plugin"
+	"github.com/hashicorp/hcl/v2/hclparse"
 	"github.com/mitchellh/go-homedir"
 	"github.com/spf13/cobra"
 )
 
 // cmdLint is a subcommand that controls the actual act of running the linter
 var cmdLint = &cobra.Command{
-	Use:   "lint",
+	Use:   "lint <paths...>",
 	Short: "Runs the terraform linter",
 	Long: `Runs the terraform linter for all enabled rules, grabbing all terraform files in current
 directory by default.
 `,
 	RunE: runLint,
-	Args: cobra.MaximumNArgs(0),
+	Example: `• tfvet lint
+• tfvet lint myfile.tf
+• tfvet line somefile.tf manyfilesfolder/*`,
 }
 
 // state contains a bunch of useful state information for the add cli function. This is mostly
@@ -117,17 +120,29 @@ func runLint(cmd *cobra.Command, args []string) error {
 
 	format, err := cmd.Flags().GetString("format")
 	if err != nil {
-		log.Fatal(err)
+		log.Print(err)
+		return err
 	}
 
 	state, err := newState("Running Linter", format)
 	if err != nil {
+		log.Print(err)
 		return err
 	}
 
-	paths, err := cmd.Flags().GetStringSlice("path")
-	if err != nil {
-		return err
+	// Get paths from arguments, if no arguments were given attempt to get files from current dir.
+	paths := []string{}
+	if len(args) == 0 {
+		defaultPath, err := os.Getwd()
+		if err != nil {
+			log.Fatal(err)
+			return err
+		}
+		defaultPath = defaultPath + "/*"
+
+		paths = []string{defaultPath}
+	} else {
+		paths = args
 	}
 
 	files, err := state.getTerraformFiles(paths)
@@ -146,23 +161,17 @@ func runLint(cmd *cobra.Command, args []string) error {
 	for _, file := range files {
 		file, err := os.Open(file)
 		if err != nil {
-			return err
+			state.fmt.PrintError("Skipped file", fmt.Sprintf("%s; could not open: %v", filepath.Base(file.Name()), err))
+			state.fmt.PrintStandaloneMsg("")
+			continue
 		}
 		defer file.Close()
 
-		//TODO(clintjedwards): check that the file is valid hcl and throw an error if its not
-		// we can probably just skip that file in normal circumstances but make sure to return
-		// a bad error code.
-		// parser := hclparse.NewParser()
-		// _, diags := parser.ParseHCL(contents, file)
-		// if diags.HasErrors() {
-		// 	state.fmt.PrintFinalError(fmt.Sprintf("%v", diags.Errs()))
-		// 	return err
-		// }
-
 		err = state.lintFile(file)
 		if err != nil {
-			return err
+			state.fmt.PrintError("Skipped file", fmt.Sprintf("%s; could not lint: %v", filepath.Base(file.Name()), err))
+			state.fmt.PrintStandaloneMsg("")
+			continue
 		}
 		numFiles++
 	}
@@ -171,35 +180,43 @@ func runLint(cmd *cobra.Command, args []string) error {
 	durationSeconds := float64(duration) / float64(time.Second)
 	timePerFile := float64(duration) / float64(numFiles)
 
-	state.fmt.PrintSuccess(fmt.Sprintf("Linted %d file(s) in %.2fs (average %.2fms/file)",
+	state.fmt.PrintFinalSuccess(fmt.Sprintf("Linted %d file(s) in %.2fs (average %.2fms/file)",
 		numFiles, durationSeconds, timePerFile/float64(time.Millisecond)))
-
-	state.fmt.PrintSuccess("Finished lint")
 
 	return nil
 }
 
+// lintFile orchestrates the process of linting the given file.
 func (s *state) lintFile(file *os.File) error {
-	s.fmt.PrintMsg(fmt.Sprintf("Linting %s", file.Name()))
-
 	// TODO(clintjedwards): Replace with a function that doesn't suck the entire file into memory
 	contents, err := ioutil.ReadAll(file)
 	if err != nil {
 		return err
 	}
 
+	_, diags := hclparse.NewParser().ParseHCL(contents, file.Name())
+	if diags.HasErrors() {
+		return diags
+	}
+
 	rulesets := s.cfg.Rulesets
 
+	// For each ruleset we need to run each one of the enabled rules against the given file.
 	for _, ruleset := range rulesets {
-		s.fmt.PrintMsg(fmt.Sprintf("Linting %s: Ruleset %s", file.Name(), ruleset.Name))
-
 		for _, rule := range ruleset.Rules {
-			s.fmt.PrintMsg(fmt.Sprintf("Linting %s: Ruleset %s - Rule %s",
-				file.Name(), ruleset.Name, strings.ToLower(rule.Name)))
+			if !rule.Enabled {
+				continue
+			}
+
+			//<filename>::<ruleset>::<rule>
+			s.fmt.PrintMsg(fmt.Sprintf("%s::%s::%s",
+				filepath.Base(file.Name()), strings.ToLower(ruleset.Name), strings.ToLower(rule.Name)))
 
 			err := s.runRule(ruleset.Name, rule, file.Name(), contents)
 			if err != nil {
-				return err
+				s.fmt.PrintError("Rule failed", fmt.Sprintf("%s; encountered an error while running: %v",
+					rule.Name, err))
+				continue
 			}
 		}
 	}
@@ -228,23 +245,17 @@ func (s *state) runRule(ruleset string, rule appcfg.Rule, filepath string, rawHC
 
 	rpcClient, err := client.Client()
 	if err != nil {
-		errText := fmt.Sprintf("could not connect to rule plugin %s: %v", rule.FileName, err)
-		s.fmt.PrintFinalError(errText)
-		return errors.New(errText)
+		return fmt.Errorf("could not create rpc client: %w", err)
 	}
 
 	raw, err := rpcClient.Dispense(tmpPluginName)
 	if err != nil {
-		errText := fmt.Sprintf("could not connect to rule plugin %s: %v", rule.FileName, err)
-		s.fmt.PrintFinalError(errText)
-		return errors.New(errText)
+		return fmt.Errorf("could not connect to rule plugin: %w", err)
 	}
 
 	plugin, ok := raw.(tfvetPlugin.RuleDefinition)
 	if !ok {
-		errText := fmt.Sprintf("could not convert rule plugin %s: %v", rule.FileName, err)
-		s.fmt.PrintFinalError(errText)
-		return errors.New(errText)
+		return fmt.Errorf("could not convert rule interface: %w", err)
 	}
 
 	//TODO(clintjedwards): If rule has a proper suggestion it should supply that as well
@@ -252,16 +263,14 @@ func (s *state) runRule(ruleset string, rule appcfg.Rule, filepath string, rawHC
 		HclFile: rawHCLFile,
 	})
 	if err != nil {
-		errText := fmt.Sprintf("could not run lint rule %s: %v", rule.FileName, err)
-		s.fmt.PrintFinalError(errText)
-		return errors.New(errText)
+		return fmt.Errorf("could not execute linting rule: %w", err)
 	}
 
 	lintErrs := response.Errors
 	for _, lintError := range lintErrs {
 		line, _, err := utils.ReadLine(bytes.NewBuffer(rawHCLFile), int(lintError.Location.Start.Line))
 		if err != nil {
-			return errors.New("could not get line from file")
+			return fmt.Errorf("could not get line from file: %w", err)
 		}
 
 		s.fmt.PrintLintError(formatter.LintErrorDetails{
@@ -273,20 +282,9 @@ func (s *state) runRule(ruleset string, rule appcfg.Rule, filepath string, rawHC
 		})
 	}
 
-	return err
+	return nil
 }
 
 func init() {
-	defaultPath, err := os.Getwd()
-	if err != nil {
-		log.Fatal(err)
-		return
-	}
-
-	defaultPath = defaultPath + "/*"
-
-	cmdLint.Flags().StringSliceP("path", "p", []string{defaultPath},
-		"Path to terraform files to lint; can point to a directory or a single file; can be used multiple times")
-
 	RootCmd.AddCommand(cmdLint)
 }

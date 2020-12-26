@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/rs/zerolog"
@@ -129,6 +130,11 @@ func (f *Formatter) PrintStandaloneMsg(msg string) {
 		f.spinner.Suffix("")
 		f.spinner.StopCharacter("")
 		f.spinner.Stop()
+
+		if !strings.HasSuffix(msg, "\n") {
+			msg = msg + "\n"
+		}
+
 		fmt.Printf(msg)
 		newSpinner, err := newSpinner(f.config)
 		if err != nil {

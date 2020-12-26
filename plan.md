@@ -95,6 +95,8 @@ PLUGIN_DIR
 //TODO(clintjedwards): We should provide a way to take input from stdin, so you can pass it
 // parts of files instead of having to read directly from files
 //TODO(clintjedwards): Make sure things are being passed correctly to stdout and stderr
+//TODO(clintjedwards): We should make a directive at the top of hcl files in the comments, such that users
+// can suppress alerts they don't want to apply to this file.
 
 FAQ:
 
