@@ -90,7 +90,6 @@ func formatLineTable(line string, lineNum int) string {
 	table.SetHeaderLine(false)
 	table.SetColMinWidth(0, 3)
 	table.SetRowSeparator("")
-	table.SetHeaderLine(false)
 	table.SetBorder(false)
 	table.SetColumnAlignment([]int{tablewriter.ALIGN_RIGHT, tablewriter.ALIGN_DEFAULT, tablewriter.ALIGN_DEFAULT})
 	table.SetTablePadding(" ")

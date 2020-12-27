@@ -26,15 +26,17 @@ import (
 
 // cmdLint is a subcommand that controls the actual act of running the linter
 var cmdLint = &cobra.Command{
-	Use:   "lint <paths...>",
+	Use:   "lint [paths...]",
 	Short: "Runs the terraform linter",
 	Long: `Runs the terraform linter for all enabled rules, grabbing all terraform files in current
 directory by default.
+
+Accepts multiple paths delimited by a space.
 `,
 	RunE: runLint,
-	Example: `• tfvet lint
-• tfvet lint myfile.tf
-• tfvet line somefile.tf manyfilesfolder/*`,
+	Example: `$ tfvet lint
+$ tfvet lint myfile.tf
+$ tfvet line somefile.tf manyfilesfolder/*`,
 }
 
 // state contains a bunch of useful state information for the add cli function. This is mostly

@@ -26,6 +26,7 @@ type Ruleset struct {
 	Name       string `hcl:"name,label"`
 	Version    string `hcl:"version"`
 	Repository string `hcl:"repository"`
+	Enabled    bool   `hcl:"enabled"`
 	Rules      []Rule `hcl:"rule,block"`
 }
 
@@ -43,6 +44,22 @@ const (
 	// Error is used to convey things that should change immediately.
 	Error
 )
+
+// SeverityToString converts a severity into a string
+func SeverityToString(severity int) string {
+	switch severity {
+	case int(Unknown):
+		return "Unknown"
+	case int(Info):
+		return "Info"
+	case int(Warning):
+		return "Warning"
+	case int(Error):
+		return "Error"
+	default:
+		return "Unknown"
+	}
+}
 
 // Rule represents a single lint check within a ruleset.
 type Rule struct {
@@ -150,6 +167,57 @@ func (appcfg *Appcfg) AddRule(rulesetName string, newRule Rule) error {
 	}
 
 	return errors.New("ruleset not found")
+}
+
+// DisableRuleset changes the enabled attribute on a ruleset to false
+func (appcfg *Appcfg) DisableRuleset(name string) error {
+	for _, ruleset := range appcfg.Rulesets {
+		if ruleset.Name != name {
+			continue
+		}
+
+		ruleset.Enabled = false
+		err := appcfg.writeConfig()
+		if err != nil {
+			return err
+		}
+
+		return nil
+	}
+
+	return errors.New("ruleset not found")
+}
+
+//EnableRuleset changes the enabled attribute on a ruleset to true
+func (appcfg *Appcfg) EnableRuleset(name string) error {
+	for _, ruleset := range appcfg.Rulesets {
+		if ruleset.Name != name {
+			continue
+		}
+
+		ruleset.Enabled = true
+		err := appcfg.writeConfig()
+		if err != nil {
+			return err
+		}
+
+		return nil
+	}
+
+	return errors.New("ruleset not found")
+}
+
+// GetRuleset is a convenience function that returns the ruleset object given a name
+func (appcfg *Appcfg) GetRuleset(name string) (Ruleset, error) {
+	for _, ruleset := range appcfg.Rulesets {
+		if ruleset.Name != name {
+			continue
+		}
+
+		return ruleset, nil
+	}
+
+	return Ruleset{}, errors.New("ruleset not found")
 }
 
 // writeConfig takes the current representation of config and writes it to the file.

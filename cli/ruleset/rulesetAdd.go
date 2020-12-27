@@ -11,7 +11,6 @@ import (
 	"time"
 
 	"github.com/clintjedwards/tfvet/cli/appcfg"
-	"github.com/clintjedwards/tfvet/cli/formatter"
 	tfvetPlugin "github.com/clintjedwards/tfvet/plugin"
 	"github.com/clintjedwards/tfvet/plugin/proto"
 	"github.com/clintjedwards/tfvet/utils"
@@ -29,61 +28,33 @@ const (
 
 var cmdRulesetAdd = &cobra.Command{
 	Use:   "add <repository>",
-	Short: "Downloads, adds, and enables a new ruleset.",
-	Long: `The add command download, adds, and enables a new tfvet ruleset.
+	Short: "Downloads, adds, and enables a new ruleset",
+	Long: `The add command downloads, adds, and enables a new tfvet ruleset.
 
 Supports a wide range of sources including github url, fileserver path, or even just
 the path to a local directory.
 
-See https://github.com/hashicorp/go-getter#url-format for more information on how to form input
+See https://github.com/hashicorp/go-getter#url-format for more information on how to form input.
 
 Arguments:
 
-* <repository> is the location of the ruleset repository. Ruleset repositories must adhere to the
+• <repository> is the location of the ruleset repository. Ruleset repositories must adhere to the
 following rules:
 
-	* Repository must contain a ruleset.hcl file containing name and version.
-	* Repository must contain a rules folder with rules plugins built with tfvet sdk.
+  • Repository must contain a ruleset.hcl file containing name and version.
+  • Repository must contain a rules folder with rules plugins built with tfvet sdk.
 
-	For more information on tfvet ruleset repository requirements see: TODO(clintjedwards):
+For more information on tfvet ruleset repository requirements see: TODO(clintjedwards):
 `,
-	Example: "$ tfvet add aws github.com/example/tfvet-ruleset-aws",
-	Args:    cobra.MaximumNArgs(1),
-	RunE:    runAdd,
+	Example: `$ tfvet add github.com/example/tfvet-ruleset-aws
+$ tfvet add ~/tmp/tfvet-ruleset-example`,
+	Args: cobra.ExactArgs(1),
+	RunE: runAdd,
 }
 
 type rulesetInfo struct {
 	Name    string `hcl:"name"`
 	Version string `hcl:"version"`
-}
-
-// state contains a bunch of useful state information for the add cli function. This is mostly
-// just for convenience.
-type state struct {
-	fmt *formatter.Formatter
-	cfg *appcfg.Appcfg
-}
-
-// newState returns a new state object with the fmt initialized
-func newState(initialFmtMsg, format string) (*state, error) {
-
-	clifmt, err := formatter.New(initialFmtMsg, formatter.Mode(format))
-	if err != nil {
-		return nil, err
-	}
-
-	cfg, err := appcfg.GetConfig()
-	if err != nil {
-		errText := fmt.Sprintf("config file `%s` does not exist."+
-			" Run `tfvet init` to create.", appcfg.ConfigFilePath())
-		clifmt.PrintFinalError(errText)
-		return nil, errors.New(errText)
-	}
-
-	return &state{
-		fmt: clifmt,
-		cfg: cfg,
-	}, nil
 }
 
 // getRuleset is used to retrieve a ruleset from any path given
@@ -365,6 +336,7 @@ func runAdd(cmd *cobra.Command, args []string) error {
 		Name:       info.Name,
 		Version:    info.Version,
 		Repository: repoLocation,
+		Enabled:    true,
 	})
 
 	err = state.moveRepo(info.Name, tmpDownloadPath)
