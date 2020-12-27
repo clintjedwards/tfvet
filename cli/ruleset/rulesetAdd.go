@@ -160,10 +160,7 @@ func (s *state) moveRepo(ruleset, tmpPath string) error {
 
 	s.fmt.PrintMsg("Moving ruleset to permanent config location")
 
-	//TODO(clintjedwards): check that the location doesn't already exist. If it does simply remove
-	//it
-
-	err := utils.CreateDirectories(appcfg.RulesetPath(ruleset))
+	err := utils.CreateDir(appcfg.RulesetPath(ruleset))
 	if err != nil {
 		errText := fmt.Sprintf("could not create parent directory: %v", err)
 		s.fmt.PrintFinalError(errText)

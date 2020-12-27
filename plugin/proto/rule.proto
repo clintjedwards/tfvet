@@ -27,7 +27,10 @@ message Location {
 }
 
 message RuleError {
-  Location location = 4; // start and end range of where error occurred
+  string remediation_text =
+      1; // a description of possible remediation for error
+  string remediation_code = 2; // program code for possible remediation
+  Location location = 3;       // start and end range of where error occurred
 }
 
 service TfvetRulePlugin {

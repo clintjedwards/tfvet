@@ -258,7 +258,6 @@ func (s *state) runRule(ruleset string, rule appcfg.Rule, filepath string, rawHC
 		return fmt.Errorf("could not convert rule interface: %w", err)
 	}
 
-	//TODO(clintjedwards): If rule has a proper suggestion it should supply that as well
 	response, err := plugin.ExecuteRule(&proto.ExecuteRuleRequest{
 		HclFile: rawHCLFile,
 	})
