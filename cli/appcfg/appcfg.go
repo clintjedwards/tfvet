@@ -29,7 +29,8 @@ type Ruleset struct {
 	Rules      []Rule `hcl:"rule,block"`
 }
 
-// RuleSeverity is a level describing how detrimental the current rule is.
+// RuleSeverity is used to convey how serious the offending error is. This is passed in the output
+// of tfvet linting errors so that downstream tools can choose whether to surface them or not.
 type RuleSeverity int
 
 const (
