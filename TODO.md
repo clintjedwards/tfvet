@@ -32,3 +32,4 @@
 - Allow users to add comments to hcl files such that they can suppress some rules/rulesets
 - Find fix for when text is too long and our spinner renders poorly.
 - Document how to make breaking changes.
+- Implement IDS for rules.

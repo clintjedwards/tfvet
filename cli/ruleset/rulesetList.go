@@ -11,7 +11,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-//TODO(clintjedwards): If the user does not give us an argument we can
 var cmdRulesetList = &cobra.Command{
 	Use:   "list [ruleset]",
 	Short: "Lists a ruleset and its rules",

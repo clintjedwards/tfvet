@@ -9,7 +9,7 @@ import (
 
 var cmdRulesetEnable = &cobra.Command{
 	Use:   "enable <ruleset>",
-	Short: "Turns on a ruleset.",
+	Short: "Turns on a ruleset",
 	Long:  `Turns on a particular ruleset, allowing it to run during linting`,
 	Args:  cobra.ExactArgs(1),
 	RunE:  runEnable,

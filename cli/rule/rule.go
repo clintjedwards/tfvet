@@ -1,4 +1,4 @@
-package ruleset
+package rule
 
 import (
 	"errors"
@@ -9,15 +9,15 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// CmdRuleset is a subcommand for ruleset
-var CmdRuleset = &cobra.Command{
-	Use:   "ruleset",
-	Short: "Manage linting rulesets",
-	Long: `Manage linting rulesets.
+// CmdRule is a subcommand for rule
+var CmdRule = &cobra.Command{
+	Use:   "rule",
+	Short: "Manage linting rules",
+	Long: `Manage linting rules.
 
-Rulesets are a grouping of rules that are used to lint documents.
+Rules are the constraints on which tfvet lints documents against.
 
-The ruleset subcommand allows you to retrieve, remove, and otherwise manipulate particular rulesets.`,
+The rule subcommand allows you to describe, enable, and otherwise manipulate particular rules.`,
 }
 
 // state contains a bunch of useful state information for cli functions.

@@ -1,7 +1,8 @@
 package cli
 
 import (
-	ruleset "github.com/clintjedwards/tfvet/cli/ruleset"
+	"github.com/clintjedwards/tfvet/cli/rule"
+	"github.com/clintjedwards/tfvet/cli/ruleset"
 	"github.com/spf13/cobra"
 )
 
@@ -27,6 +28,7 @@ var RootCmd = &cobra.Command{
 
 func init() {
 	RootCmd.AddCommand(ruleset.CmdRuleset)
+	RootCmd.AddCommand(rule.CmdRule)
 
 	RootCmd.PersistentFlags().StringP("format", "f", "pretty",
 		"output format; accepted values are 'pretty', 'json', and, 'plain'")

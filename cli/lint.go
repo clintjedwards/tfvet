@@ -206,6 +206,10 @@ func (s *state) lintFile(file *os.File) error {
 
 	// For each ruleset we need to run each one of the enabled rules against the given file.
 	for _, ruleset := range rulesets {
+		if !ruleset.Enabled {
+			continue
+		}
+
 		for _, rule := range ruleset.Rules {
 			if !rule.Enabled {
 				continue

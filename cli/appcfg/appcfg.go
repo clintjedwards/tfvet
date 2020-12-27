@@ -207,7 +207,59 @@ func (appcfg *Appcfg) EnableRuleset(name string) error {
 	return errors.New("ruleset not found")
 }
 
-// GetRuleset is a convenience function that returns the ruleset object given a name
+// DisableRule changes the enabled attribute on a rule to false
+func (appcfg *Appcfg) DisableRule(ruleset, rule string) error {
+	for _, rs := range appcfg.Rulesets {
+		if rs.Name != ruleset {
+			continue
+		}
+
+		for index, r := range rs.Rules {
+			if r.FileName != rule {
+				continue
+			}
+
+			rs.Rules[index].Enabled = false
+			err := appcfg.writeConfig()
+			if err != nil {
+				return err
+			}
+
+			return nil
+		}
+		return errors.New("rule not found")
+	}
+
+	return errors.New("ruleset not found")
+}
+
+// EnableRule changes the enabled attribute on a rule to true
+func (appcfg *Appcfg) EnableRule(ruleset, rule string) error {
+	for _, rs := range appcfg.Rulesets {
+		if rs.Name != ruleset {
+			continue
+		}
+
+		for index, r := range rs.Rules {
+			if r.FileName != rule {
+				continue
+			}
+
+			rs.Rules[index].Enabled = true
+			err := appcfg.writeConfig()
+			if err != nil {
+				return err
+			}
+
+			return nil
+		}
+		return errors.New("rule not found")
+	}
+
+	return errors.New("ruleset not found")
+}
+
+// GetRuleset is a convenience function that returns the ruleset object of a given name
 func (appcfg *Appcfg) GetRuleset(name string) (Ruleset, error) {
 	for _, ruleset := range appcfg.Rulesets {
 		if ruleset.Name != name {
@@ -218,6 +270,27 @@ func (appcfg *Appcfg) GetRuleset(name string) (Ruleset, error) {
 	}
 
 	return Ruleset{}, errors.New("ruleset not found")
+}
+
+// GetRule is a convenience function that returns the rule object of a given name
+func (appcfg *Appcfg) GetRule(rulesetName, ruleName string) (Rule, error) {
+	for _, ruleset := range appcfg.Rulesets {
+		if ruleset.Name != rulesetName {
+			continue
+		}
+
+		for _, rule := range ruleset.Rules {
+			if rule.FileName != ruleName {
+				continue
+			}
+
+			return rule, nil
+		}
+
+		return Rule{}, errors.New("rule not found")
+	}
+
+	return Rule{}, errors.New("ruleset not found")
 }
 
 // writeConfig takes the current representation of config and writes it to the file.
