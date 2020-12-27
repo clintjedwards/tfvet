@@ -180,7 +180,7 @@ func runLint(cmd *cobra.Command, args []string) error {
 	durationSeconds := float64(duration) / float64(time.Second)
 	timePerFile := float64(duration) / float64(numFiles)
 
-	state.fmt.PrintFinalSuccess(fmt.Sprintf("Linted %d file(s) in %.2fs (average %.2fms/file)",
+	state.fmt.PrintFinalSuccess(fmt.Sprintf("Linted %d file(s) in %.2fs (avg %.2fms/file)",
 		numFiles, durationSeconds, timePerFile/float64(time.Millisecond)))
 
 	return nil
@@ -189,6 +189,7 @@ func runLint(cmd *cobra.Command, args []string) error {
 // lintFile orchestrates the process of linting the given file.
 func (s *state) lintFile(file *os.File) error {
 	// TODO(clintjedwards): Replace with a function that doesn't suck the entire file into memory
+	// or make sure file isn't too large before we absorb it.
 	contents, err := ioutil.ReadAll(file)
 	if err != nil {
 		return err

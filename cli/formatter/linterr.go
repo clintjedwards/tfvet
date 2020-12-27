@@ -33,11 +33,13 @@ x Error: lolwut is inherently unsafe; see link for more details
     |
  17 | lolwut = "weow"
     |
-    |
+	|
  = additional information:
-  • rule: resource_should_not_contain_attr_lolwut
+  • rule name: resource_should_not_contain_attr_lolwut
   • link: http://lolwut.com/
-  • long: tfvet rule describe example resource_should_not_contain_attr_lolwut
+  • more info: tfvet rule describe example resource_should_not_contain_attr_lolwut
+  • remediation: some text here about how to fix the problem.
+  • remediation: `some code to fix the issue`
 */
 func (f *Formatter) PrintLintError(details LintErrorDetails) {
 	if f.mode == Pretty {
@@ -49,7 +51,7 @@ func (f *Formatter) PrintLintError(details LintErrorDetails) {
 		// Next pretty print the error line
 		f.PrintStandaloneMsg(formatLineTable(details.Line, int(details.LintErr.Location.Start.Line)))
 		f.PrintStandaloneMsg("  = additional information:\n")
-		f.PrintStandaloneMsg(formatAdditionalInfo(details.Ruleset, details.Rule))
+		f.PrintStandaloneMsg(formatAdditionalInfo(details))
 		f.PrintStandaloneMsg("\n")
 		return
 	}
@@ -60,6 +62,8 @@ func (f *Formatter) PrintLintError(details LintErrorDetails) {
 		Str("short", details.Rule.Short).
 		Str("link", details.Rule.Link).
 		Str("line", details.Line).
+		Str("remediation_text", details.LintErr.RemediationText).
+		Str("remediation_code", details.LintErr.RemediationCode).
 		Int("start_line", int(details.LintErr.Location.Start.Line)).
 		Int("start_col", int(details.LintErr.Location.Start.Column)).
 		Int("end_line", int(details.LintErr.Location.End.Line)).
@@ -97,13 +101,21 @@ func formatLineTable(line string, lineNum int) string {
 	return tableString.String()
 }
 
-func formatAdditionalInfo(ruleset string, rule appcfg.Rule) string {
-	moreInfoCmd := fmt.Sprintf("tfvet rule describe %s %s", ruleset, rule.FileName)
+func formatAdditionalInfo(details LintErrorDetails) string {
+	moreInfoCmd := fmt.Sprintf("tfvet rule describe %s %s", details.Ruleset, details.Rule.FileName)
 
 	data := [][]string{
-		{"• rule name:", rule.FileName},
-		{"• link:", rule.Link},
+		{"• rule name:", details.Rule.FileName},
+		{"• link:", details.Rule.Link},
 		{"• more info:", fmt.Sprintf("`%s`", moreInfoCmd)},
+	}
+
+	if details.LintErr.RemediationText != "" {
+		data = append(data, []string{"• remediation:", fmt.Sprintf("%s", details.LintErr.RemediationText)})
+	}
+	if details.LintErr.RemediationCode != "" {
+		data = append(data,
+			[]string{"• remediation:", fmt.Sprintf("`%s`", details.LintErr.RemediationCode)})
 	}
 
 	tableString := &strings.Builder{}
