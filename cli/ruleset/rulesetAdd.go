@@ -68,7 +68,7 @@ type rulesetInfo struct {
 func (s *state) getRuleset(location string) (string, error) {
 	s.fmt.PrintMsg(fmt.Sprintf("Retrieving %s", location))
 
-	tmpDownloadPath := fmt.Sprintf("%s/tfvet_%s", os.TempDir(), utils.GenerateRandString(5))
+	tmpDownloadPath := fmt.Sprintf("%s/tfvet_%s", os.TempDir(), generateHash(location))
 	_, err := getter.Get(context.Background(), tmpDownloadPath, location)
 	if err != nil {
 		errText := fmt.Sprintf("could not download ruleset: %v", err)
@@ -193,7 +193,9 @@ func (s *state) buildRulesetRules(ruleset string) error {
 		s.fmt.PrintMsg(fmt.Sprintf("Compiling %s", fileName))
 
 		rawRulePath := fmt.Sprintf("%s/%s", appcfg.RepoRulesPath(ruleset), fileName)
-		ruleID := generateRuleID(fileName)
+
+		// we take the hash of the filename(aka the rule folder name) and make it the rule ID
+		ruleID := generateHash(fileName)
 
 		_, err := buildRule(rawRulePath, appcfg.RulePath(ruleset, ruleID))
 		if err != nil {
@@ -219,7 +221,7 @@ func (s *state) buildRulesetRules(ruleset string) error {
 	return nil
 }
 
-func generateRuleID(filename string) string {
+func generateHash(filename string) string {
 	digest := fnv.New32()
 	_, _ = digest.Write([]byte(filename))
 	hash := hex.EncodeToString(digest.Sum(nil))
@@ -331,7 +333,7 @@ func runAdd(cmd *cobra.Command, args []string) error {
 	// Check that repository does not yet exist
 	if state.cfg.RepositoryExists(repoLocation) {
 		errText := "repository already exists; use `tfvet ruleset delete` or" +
-			"`tfvet ruleset update` to manipulate already added rulesets."
+			"`tfvet ruleset update` to manipulate already added rulesets"
 		state.fmt.PrintFinalError(errText)
 		return errors.New(errText)
 	}

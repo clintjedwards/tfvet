@@ -135,7 +135,7 @@ func (f *Formatter) PrintStandaloneMsg(msg string) {
 			msg = msg + "\n"
 		}
 
-		fmt.Printf(msg)
+		fmt.Print(msg)
 		newSpinner, err := newSpinner(f.config)
 		if err != nil {
 			log.Fatal().Err(err).Msg("could not init new spinner")

@@ -111,7 +111,7 @@ func formatAdditionalInfo(details LintErrorDetails) string {
 	}
 
 	if details.LintErr.RemediationText != "" {
-		data = append(data, []string{"• remediation:", fmt.Sprintf("%s", details.LintErr.RemediationText)})
+		data = append(data, []string{"• remediation:", details.LintErr.RemediationText})
 	}
 	if details.LintErr.RemediationCode != "" {
 		data = append(data,

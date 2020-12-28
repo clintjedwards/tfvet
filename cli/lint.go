@@ -133,7 +133,7 @@ func runLint(cmd *cobra.Command, args []string) error {
 	}
 
 	// Get paths from arguments, if no arguments were given attempt to get files from current dir.
-	paths := []string{}
+	var paths []string
 	if len(args) == 0 {
 		defaultPath, err := os.Getwd()
 		if err != nil {
@@ -154,7 +154,7 @@ func runLint(cmd *cobra.Command, args []string) error {
 
 	if len(files) == 0 {
 		state.fmt.PrintFinalError("No terraform files found")
-		return errors.New("No terraform files found")
+		return errors.New("no terraform files found")
 	}
 
 	startTime := time.Now()
