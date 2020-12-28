@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"strconv"
+	"strings"
 
 	"github.com/clintjedwards/tfvet/cli/appcfg"
 	"github.com/spf13/cobra"
@@ -38,11 +39,11 @@ func runDescribe(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	state.fmt.PrintStandaloneMsg(fmt.Sprintf("%s(%s)", rule.Name, rule.FileName))
+	state.fmt.PrintStandaloneMsg(fmt.Sprintf("[%s] %s", rule.ID, rule.Name))
 	state.fmt.PrintStandaloneMsg("")
 	state.fmt.PrintStandaloneMsg(rule.Short)
 	state.fmt.PrintStandaloneMsg("")
-	state.fmt.PrintStandaloneMsg(rule.Long)
+	state.fmt.PrintStandaloneMsg(strings.TrimPrefix(rule.Long, "\n"))
 	state.fmt.PrintStandaloneMsg("")
 	state.fmt.PrintStandaloneMsg(fmt.Sprintf("Severity: %s | Enabled: %s | Link: %s",
 		appcfg.SeverityToString(rule.Severity), strconv.FormatBool(rule.Enabled), rule.Link))

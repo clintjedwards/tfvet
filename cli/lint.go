@@ -239,7 +239,7 @@ func (s *state) runRule(ruleset string, rule appcfg.Rule, filepath string, rawHC
 		Plugins: map[string]plugin.Plugin{
 			tmpPluginName: &tfvetPlugin.TfvetRulePlugin{},
 		},
-		Cmd: exec.Command(appcfg.RulePath(ruleset, rule.FileName)),
+		Cmd: exec.Command(appcfg.RulePath(ruleset, rule.ID)),
 		Logger: hclog.New(&hclog.LoggerOptions{
 			Output: ioutil.Discard,
 			Level:  0,

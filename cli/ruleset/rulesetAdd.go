@@ -2,13 +2,17 @@ package ruleset
 
 import (
 	"context"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"time"
+
+	"hash/fnv"
 
 	"github.com/clintjedwards/tfvet/cli/appcfg"
 	tfvetPlugin "github.com/clintjedwards/tfvet/plugin"
@@ -182,18 +186,23 @@ func (s *state) buildRulesetRules(ruleset string) error {
 			continue
 		}
 
-		s.fmt.PrintMsg(fmt.Sprintf("Compiling %s", file.Name()))
+		// Get the filename and not the full path
+		// Sometimes file.Name will return the full path based on what is passed to file.Open
+		fileName := filepath.Base(file.Name())
 
-		rawRulePath := fmt.Sprintf("%s/%s", appcfg.RepoRulesPath(ruleset), file.Name())
+		s.fmt.PrintMsg(fmt.Sprintf("Compiling %s", fileName))
 
-		_, err := buildRule(rawRulePath, appcfg.RulePath(ruleset, file.Name()))
+		rawRulePath := fmt.Sprintf("%s/%s", appcfg.RepoRulesPath(ruleset), fileName)
+		ruleID := generateRuleID(fileName)
+
+		_, err := buildRule(rawRulePath, appcfg.RulePath(ruleset, ruleID))
 		if err != nil {
-			errText := fmt.Sprintf("could not build rule %s: %v", file.Name(), err)
+			errText := fmt.Sprintf("could not build rule %s: %v", fileName, err)
 			s.fmt.PrintFinalError(errText)
 			return errors.New(errText)
 		}
 
-		err = s.getRuleInfo(ruleset, file.Name())
+		err = s.getRuleInfo(ruleset, ruleID)
 		if err != nil {
 			return err
 		}
@@ -208,6 +217,13 @@ func (s *state) buildRulesetRules(ruleset string) error {
 		count, durationSeconds, timePerRule/float64(time.Millisecond)))
 
 	return nil
+}
+
+func generateRuleID(filename string) string {
+	digest := fnv.New32()
+	_, _ = digest.Write([]byte(filename))
+	hash := hex.EncodeToString(digest.Sum(nil))
+	return fmt.Sprintf(hash[0:5])
 }
 
 func (s *state) getRuleInfo(ruleset, rule string) error {
@@ -260,7 +276,7 @@ func (s *state) getRuleInfo(ruleset, rule string) error {
 	}
 
 	err = s.cfg.AddRule(ruleset, appcfg.Rule{
-		FileName: rule,
+		ID:       rule,
 		Name:     response.RuleInfo.Name,
 		Short:    response.RuleInfo.Short,
 		Long:     response.RuleInfo.Long,

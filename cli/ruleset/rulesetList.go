@@ -104,7 +104,7 @@ func formatRuleset(ruleset appcfg.Ruleset) string {
 
 	for _, rule := range ruleset.Rules {
 		data = append(data, []string{
-			rule.FileName,
+			rule.ID,
 			rule.Name,
 			rule.Short,
 			appcfg.SeverityToString(rule.Severity),

@@ -58,7 +58,7 @@ func (f *Formatter) PrintLintError(details LintErrorDetails) {
 
 	log.Error().
 		Str("type", "linterror").
-		Str("name", details.Rule.FileName).
+		Str("name", details.Rule.ID).
 		Str("short", details.Rule.Short).
 		Str("link", details.Rule.Link).
 		Str("line", details.Line).
@@ -101,10 +101,11 @@ func formatLineTable(line string, lineNum int) string {
 }
 
 func formatAdditionalInfo(details LintErrorDetails) string {
-	moreInfoCmd := fmt.Sprintf("tfvet rule describe %s %s", details.Ruleset, details.Rule.FileName)
+	moreInfoCmd := fmt.Sprintf("tfvet rule describe %s %s", details.Ruleset, details.Rule.ID)
 
 	data := [][]string{
-		{"• rule name:", details.Rule.FileName},
+		{"• id:", details.Rule.ID},
+		{"• name:", details.Rule.Name},
 		{"• link:", details.Rule.Link},
 		{"• more info:", fmt.Sprintf("`%s`", moreInfoCmd)},
 	}

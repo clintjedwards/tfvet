@@ -63,7 +63,7 @@ func SeverityToString(severity int) string {
 
 // Rule represents a single lint check within a ruleset.
 type Rule struct {
-	FileName string `hcl:"filename,label"`
+	ID       string `hcl:"id,label"`
 	Name     string `hcl:"name"`
 	Short    string `hcl:"short"`
 	Long     string `hcl:"long"`
@@ -151,7 +151,7 @@ func (appcfg *Appcfg) AddRule(rulesetName string, newRule Rule) error {
 		}
 
 		for _, rule := range ruleset.Rules {
-			if rule.FileName == newRule.FileName {
+			if rule.ID == newRule.ID {
 				return errors.New("rule already exists")
 			}
 		}
@@ -215,7 +215,7 @@ func (appcfg *Appcfg) DisableRule(ruleset, rule string) error {
 		}
 
 		for index, r := range rs.Rules {
-			if r.FileName != rule {
+			if r.ID != rule {
 				continue
 			}
 
@@ -241,7 +241,7 @@ func (appcfg *Appcfg) EnableRule(ruleset, rule string) error {
 		}
 
 		for index, r := range rs.Rules {
-			if r.FileName != rule {
+			if r.ID != rule {
 				continue
 			}
 
@@ -280,7 +280,7 @@ func (appcfg *Appcfg) GetRule(rulesetName, ruleName string) (Rule, error) {
 		}
 
 		for _, rule := range ruleset.Rules {
-			if rule.FileName != ruleName {
+			if rule.ID != ruleName {
 				continue
 			}
 
