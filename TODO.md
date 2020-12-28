@@ -33,3 +33,5 @@
 - Find fix for when text is too long and our spinner renders poorly.
 - Document how to make breaking changes.
 - Generator for new rules, rulesets,
+- Unfuck Ruleset package, figure out good way to separate state from actual functions
+- Change hcl appcfg pointers

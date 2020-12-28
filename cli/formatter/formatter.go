@@ -210,3 +210,13 @@ func (f *Formatter) PrintFinalSuccess(msg string) {
 
 	log.Info().Msg(msg)
 }
+
+// UpdateSuffix updates the text that comes right after the spinner.
+func (f *Formatter) UpdateSuffix(text string) {
+	if f.mode == Pretty {
+		f.spinner.Suffix(fmt.Sprintf(" %s", text))
+		return
+	}
+
+	log.Info().Msg(text)
+}

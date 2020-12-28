@@ -132,6 +132,26 @@ func (appcfg *Appcfg) AddRuleset(rs Ruleset) error {
 	return nil
 }
 
+// UpdateRuleset updates and existing ruleset
+func (appcfg *Appcfg) UpdateRuleset(rs Ruleset) error {
+	for index, ruleset := range appcfg.Rulesets {
+		if ruleset.Name != rs.Name {
+			continue
+		}
+
+		appcfg.Rulesets[index] = rs
+		appcfg.RepoMap[rs.Repository] = rs.Name
+		err := appcfg.writeConfig()
+		if err != nil {
+			return err
+		}
+
+		return nil
+	}
+
+	return errors.New("could not find ruleset")
+}
+
 // rulesetExists determines if a ruleset has already been added.
 func (appcfg *Appcfg) rulesetExists(name string) bool {
 	for _, ruleset := range appcfg.Rulesets {
@@ -143,16 +163,24 @@ func (appcfg *Appcfg) rulesetExists(name string) bool {
 	return false
 }
 
-// AddRule adds a new rule to an already established ruleset.
-func (appcfg *Appcfg) AddRule(rulesetName string, newRule Rule) error {
+// UpsertRule adds a new rule to an already established ruleset if it does not exist. If the rule
+// already exists it simply updates the rule with the newer information.
+func (appcfg *Appcfg) UpsertRule(rulesetName string, newRule Rule) error {
 	for index, ruleset := range appcfg.Rulesets {
 		if ruleset.Name != rulesetName {
 			continue
 		}
 
-		for _, rule := range ruleset.Rules {
+		for rindex, rule := range ruleset.Rules {
 			if rule.ID == newRule.ID {
-				return errors.New("rule already exists")
+				// Keep user settings for updated rule
+				newRule.Enabled = rule.Enabled
+				appcfg.Rulesets[index].Rules[rindex] = newRule
+				err := appcfg.writeConfig()
+				if err != nil {
+					return err
+				}
+				return nil
 			}
 		}
 

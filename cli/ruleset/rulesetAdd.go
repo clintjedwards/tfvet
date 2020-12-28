@@ -1,7 +1,6 @@
 package ruleset
 
 import (
-	"context"
 	"encoding/hex"
 	"errors"
 	"fmt"
@@ -9,8 +8,6 @@ import (
 	"log"
 	"os"
 	"os/exec"
-	"path/filepath"
-	"time"
 
 	"hash/fnv"
 
@@ -18,10 +15,8 @@ import (
 	tfvetPlugin "github.com/clintjedwards/tfvet/plugin"
 	"github.com/clintjedwards/tfvet/plugin/proto"
 	"github.com/clintjedwards/tfvet/utils"
-	getter "github.com/hashicorp/go-getter/v2"
 	"github.com/hashicorp/go-hclog"
 	"github.com/hashicorp/go-plugin"
-	"github.com/hashicorp/hcl/v2/hclsimple"
 	"github.com/otiai10/copy"
 	"github.com/spf13/cobra"
 )
@@ -56,80 +51,6 @@ $ tfvet add ~/tmp/tfvet-ruleset-example`,
 	RunE: runAdd,
 }
 
-type rulesetInfo struct {
-	Name    string `hcl:"name"`
-	Version string `hcl:"version"`
-}
-
-// getRuleset is used to retrieve a ruleset from any path given
-// (supports a wide range of remote and local)
-//
-// Returns temporary ruleset download path
-func (s *state) getRuleset(location string) (string, error) {
-	s.fmt.PrintMsg(fmt.Sprintf("Retrieving %s", location))
-
-	tmpDownloadPath := fmt.Sprintf("%s/tfvet_%s", os.TempDir(), generateHash(location))
-	_, err := getter.Get(context.Background(), tmpDownloadPath, location)
-	if err != nil {
-		errText := fmt.Sprintf("could not download ruleset: %v", err)
-		s.fmt.PrintFinalError(errText)
-		return "", errors.New(errText)
-	}
-
-	s.fmt.PrintSuccess(fmt.Sprintf("Retrieved %s", location))
-	return tmpDownloadPath, err
-}
-
-// getRulesetInfo makes sure a downloaded ruleset has the correct structure and collects its
-// information.
-//
-// specifically it:
-//
-//	* Makes sure the ruleset has a parseable ruleset.hcl file.
-//	* Makes sure the ruleset has a version and a name.
-//	* Makes sure the ruleset has a rules folder.
-func (s *state) getRulesetInfo(repositoryPath string) (rulesetInfo, error) {
-
-	s.fmt.PrintMsg("Verifying ruleset")
-
-	var info rulesetInfo
-
-	// Check for parseable ruleset file and get info
-	rulesetFilePath := fmt.Sprintf("%s/%s", repositoryPath, "ruleset.hcl")
-
-	err := hclsimple.DecodeFile(rulesetFilePath, nil, &info)
-	if err != nil {
-		errText := fmt.Sprintf("could not verify ruleset: %v", err)
-		s.fmt.PrintFinalError(errText)
-		return rulesetInfo{}, errors.New(errText)
-	}
-
-	//TODO(clintjedwards): Better validation of these
-	if len(info.Name) < 3 {
-		errText := "ruleset name cannot be less than 3 characters"
-		s.fmt.PrintFinalError(errText)
-		return rulesetInfo{}, errors.New(errText)
-	}
-
-	if len(info.Version) < 5 {
-		errText := "ruleset version text malformed; should be in semvar notation"
-		s.fmt.PrintFinalError(errText)
-		return rulesetInfo{}, errors.New(errText)
-	}
-
-	rulesDirPath := fmt.Sprintf("%s/%s", repositoryPath, "rules")
-
-	if _, err := os.Stat(rulesDirPath); os.IsNotExist(err) {
-		errText := "no rules directory found; all rulesets must have a rules directory"
-		s.fmt.PrintFinalError(errText)
-		return rulesetInfo{}, errors.New(errText)
-	}
-
-	s.fmt.PrintSuccess("Verified ruleset")
-
-	return info, nil
-}
-
 // move a downloaded repo from the temporary path to the well known repo path for the ruleset.
 func (s *state) moveRepo(ruleset, tmpPath string) error {
 
@@ -154,73 +75,6 @@ func (s *state) moveRepo(ruleset, tmpPath string) error {
 	return nil
 }
 
-//TODO(clintjedwards): When you hit a rule you can't build continue to other rules
-// if 3 built rules fail in a row, there is a bigger problem and we should return immediately
-//
-// buildRulesetRules builds the rules plugins and places the binary underneath the correct ruleset.
-func (s *state) buildRulesetRules(ruleset string) error {
-	s.fmt.PrintMsg("Opening rules directory")
-
-	file, err := os.Open(appcfg.RepoRulesPath(ruleset))
-	if err != nil {
-		errText := fmt.Sprintf("could not open rules folder: %v", err)
-		s.fmt.PrintFinalError(errText)
-		return errors.New(errText)
-	}
-	defer file.Close()
-
-	fileList, err := file.Readdir(0)
-	if err != nil {
-		errText := fmt.Sprintf("could not read rules folder: %v", err)
-		s.fmt.PrintFinalError(errText)
-		return errors.New(errText)
-	}
-
-	startTime := time.Now()
-	count := 0
-
-	// Rules are separated into directories. We iterate through directories and build whats inside
-	// them.
-	for _, file := range fileList {
-		if !file.IsDir() {
-			continue
-		}
-
-		// Get the filename and not the full path
-		// Sometimes file.Name will return the full path based on what is passed to file.Open
-		fileName := filepath.Base(file.Name())
-
-		s.fmt.PrintMsg(fmt.Sprintf("Compiling %s", fileName))
-
-		rawRulePath := fmt.Sprintf("%s/%s", appcfg.RepoRulesPath(ruleset), fileName)
-
-		// we take the hash of the filename(aka the rule folder name) and make it the rule ID
-		ruleID := generateHash(fileName)
-
-		_, err := buildRule(rawRulePath, appcfg.RulePath(ruleset, ruleID))
-		if err != nil {
-			errText := fmt.Sprintf("could not build rule %s: %v", fileName, err)
-			s.fmt.PrintFinalError(errText)
-			return errors.New(errText)
-		}
-
-		err = s.getRuleInfo(ruleset, ruleID)
-		if err != nil {
-			return err
-		}
-		count++
-	}
-
-	duration := time.Since(startTime)
-	durationSeconds := float64(duration) / float64(time.Second)
-	timePerRule := float64(duration) / float64(count)
-
-	s.fmt.PrintSuccess(fmt.Sprintf("Compiled %d rules in %.2fs (average %.2fms/rule)",
-		count, durationSeconds, timePerRule/float64(time.Millisecond)))
-
-	return nil
-}
-
 func generateHash(filename string) string {
 	digest := fnv.New32()
 	_, _ = digest.Write([]byte(filename))
@@ -228,6 +82,8 @@ func generateHash(filename string) string {
 	return fmt.Sprintf(hash[0:5])
 }
 
+//TODO(clintjedwards): Break down this function, it should not work this way
+// it needs to be a lot smaller
 func (s *state) getRuleInfo(ruleset, rule string) error {
 	tmpPluginName := "tfvetPlugin"
 
@@ -277,7 +133,7 @@ func (s *state) getRuleInfo(ruleset, rule string) error {
 		return errors.New(errText)
 	}
 
-	err = s.cfg.AddRule(ruleset, appcfg.Rule{
+	err = s.cfg.UpsertRule(ruleset, appcfg.Rule{
 		ID:       rule,
 		Name:     response.RuleInfo.Name,
 		Short:    response.RuleInfo.Short,
@@ -338,16 +194,35 @@ func runAdd(cmd *cobra.Command, args []string) error {
 		return errors.New(errText)
 	}
 
-	tmpDownloadPath, err := state.getRuleset(repoLocation)
+	// Download remote repository
+	state.fmt.PrintMsg(fmt.Sprintf("Retrieving %s", repoLocation))
+	tmpDownloadPath := fmt.Sprintf("%s/tfvet_%s", os.TempDir(), generateHash(repoLocation))
+	err = getRemoteRuleset(repoLocation, tmpDownloadPath)
 	if err != nil {
-		return err
+		errText := fmt.Sprintf("could not download ruleset: %v", err)
+		state.fmt.PrintFinalError(errText)
+		return errors.New(errText)
 	}
 	defer os.RemoveAll(tmpDownloadPath) // Remove tmp dir in case we end early
+	state.fmt.PrintSuccess(fmt.Sprintf("Retrieved %s", repoLocation))
 
-	info, err := state.getRulesetInfo(tmpDownloadPath)
+	// Retrieve repo into in hcl file
+	info, err := getRemoteRulesetInfo(tmpDownloadPath)
 	if err != nil {
-		return err
+		errText := fmt.Sprintf("could not get ruleset info: %v", err)
+		state.fmt.PrintFinalError(errText)
+		return errors.New(errText)
 	}
+
+	// Ruleset verification
+	state.fmt.PrintMsg("Verifying ruleset")
+	err = verifyRuleset(tmpDownloadPath, info)
+	if err != nil {
+		errText := fmt.Sprintf("could not verify ruleset: %v", err)
+		state.fmt.PrintFinalError(errText)
+		return errors.New(errText)
+	}
+	state.fmt.PrintSuccess("Verified ruleset")
 
 	state.fmt.PrintMsg("Adding ruleset to config")
 	err = state.cfg.AddRuleset(appcfg.Ruleset{
@@ -357,21 +232,26 @@ func runAdd(cmd *cobra.Command, args []string) error {
 		Enabled:    true,
 	})
 	if err != nil {
-		return err
+		errText := fmt.Sprintf("could not add ruleset: %v", err)
+		state.fmt.PrintFinalError(errText)
+		return errors.New(errText)
 	}
 
 	err = state.moveRepo(info.Name, tmpDownloadPath)
 	if err != nil {
-		return err
+		errText := fmt.Sprintf("could not move ruleset repository: %v", err)
+		state.fmt.PrintFinalError(errText)
+		return errors.New(errText)
 	}
 
-	err = state.buildRulesetRules(info.Name)
+	err = buildRulesetRules(state, info.Name)
 	if err != nil {
-		return err
+		errText := fmt.Sprintf("could not build ruleset rules: %v", err)
+		state.fmt.PrintFinalError(errText)
+		return errors.New(errText)
 	}
 
 	state.fmt.PrintFinalSuccess(fmt.Sprintf("Successfully added ruleset: %s v%s", info.Name, info.Version))
-
 	return nil
 }
 
