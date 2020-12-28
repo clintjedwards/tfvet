@@ -350,12 +350,15 @@ func runAdd(cmd *cobra.Command, args []string) error {
 	}
 
 	state.fmt.PrintMsg("Adding ruleset to config")
-	state.cfg.AddRuleset(appcfg.Ruleset{
+	err = state.cfg.AddRuleset(appcfg.Ruleset{
 		Name:       info.Name,
 		Version:    info.Version,
 		Repository: repoLocation,
 		Enabled:    true,
 	})
+	if err != nil {
+		return err
+	}
 
 	err = state.moveRepo(info.Name, tmpDownloadPath)
 	if err != nil {

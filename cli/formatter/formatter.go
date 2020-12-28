@@ -99,7 +99,7 @@ func newSpinner(cfg yacspin.Config) (*yacspin.Spinner, error) {
 	if err != nil {
 		return nil, err
 	}
-	spinner.Start()
+	_ = spinner.Start()
 	return spinner, nil
 }
 
@@ -129,7 +129,7 @@ func (f *Formatter) PrintStandaloneMsg(msg string) {
 	if f.mode == Pretty {
 		f.spinner.Suffix("")
 		f.spinner.StopCharacter("")
-		f.spinner.Stop()
+		_ = f.spinner.Stop()
 
 		if !strings.HasSuffix(msg, "\n") {
 			msg = msg + "\n"
@@ -154,7 +154,7 @@ func (f *Formatter) PrintError(suffix, msg string) {
 	if f.mode == Pretty {
 		f.spinner.Suffix(fmt.Sprintf(" %s", suffix))
 		f.spinner.StopFailMessage(msg)
-		f.spinner.StopFail()
+		_ = f.spinner.StopFail()
 		newSpinner, err := newSpinner(f.config)
 		if err != nil {
 			log.Fatal().Err(err).Msg("could not init new spinner")
@@ -173,7 +173,7 @@ func (f *Formatter) PrintError(suffix, msg string) {
 func (f *Formatter) PrintFinalError(msg string) {
 	if f.mode == Pretty {
 		f.spinner.StopFailMessage(msg)
-		f.spinner.StopFail()
+		_ = f.spinner.StopFail()
 		return
 	}
 
@@ -185,7 +185,7 @@ func (f *Formatter) PrintFinalError(msg string) {
 func (f *Formatter) PrintSuccess(msg string) {
 	if f.mode == Pretty {
 		f.spinner.Suffix(fmt.Sprintf(" %s", msg))
-		f.spinner.Stop()
+		_ = f.spinner.Stop()
 		newSpinner, err := newSpinner(f.config)
 		if err != nil {
 			log.Fatal().Err(err).Msg("could not init new spinner")
@@ -204,7 +204,7 @@ func (f *Formatter) PrintSuccess(msg string) {
 func (f *Formatter) PrintFinalSuccess(msg string) {
 	if f.mode == Pretty {
 		f.spinner.Suffix(fmt.Sprintf(" %s", msg))
-		f.spinner.Stop()
+		_ = f.spinner.Stop()
 		return
 	}
 
