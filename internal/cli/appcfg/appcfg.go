@@ -5,7 +5,6 @@ package appcfg
 import (
 	"errors"
 	"io/ioutil"
-	"log"
 	"os"
 
 	"github.com/clintjedwards/tfvet/internal/cli/models"
@@ -43,7 +42,6 @@ func GetConfig() (*Appcfg, error) {
 
 	err := hclsimple.DecodeFile(ConfigFilePath(), nil, hclFile)
 	if err != nil {
-		log.Print(err)
 		return nil, err
 	}
 

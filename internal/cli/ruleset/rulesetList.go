@@ -31,7 +31,6 @@ func runList(cmd *cobra.Command, args []string) error {
 
 	state, err := newState("", format)
 	if err != nil {
-		log.Println(err)
 		return err
 	}
 
@@ -99,7 +98,7 @@ func formatRuleset(ruleset models.Ruleset) string {
 	title := fmt.Sprintf("Ruleset: %s %s :: %d rule(s) :: %s\n\n",
 		ruleset.Name, ruleset.Version, len(ruleset.Rules), enabledStr)
 
-	headers := []string{"Rule", "Name", "Description", "Severity", "Enabled"}
+	headers := []string{"Rule", "Name", "Description", "Enabled"}
 	data := [][]string{}
 
 	for _, rule := range ruleset.Rules {
@@ -107,7 +106,6 @@ func formatRuleset(ruleset models.Ruleset) string {
 			rule.ID,
 			rule.Name,
 			rule.Short,
-			rule.Severity,
 			strconv.FormatBool(rule.Enabled),
 		})
 	}

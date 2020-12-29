@@ -1,6 +1,7 @@
 package formatter
 
 import (
+	"encoding/json"
 	"fmt"
 	"strconv"
 	"strings"
@@ -56,14 +57,17 @@ func (f *Formatter) PrintLintError(details LintErrorDetails) {
 		return
 	}
 
+	metadata, _ := json.Marshal(details.LintErr.Metadata)
+
 	log.Error().
 		Str("type", "linterror").
 		Str("name", details.Rule.ID).
 		Str("short", details.Rule.Short).
 		Str("link", details.Rule.Link).
 		Str("line", details.Line).
-		Str("remediation_text", details.LintErr.RemediationText).
-		Str("remediation_code", details.LintErr.RemediationCode).
+		RawJSON("metadata", metadata).
+		Str("suggestion", details.LintErr.Suggestion).
+		Str("remediation", details.LintErr.Remediation).
 		Int("start_line", int(details.LintErr.Location.Start.Line)).
 		Int("start_col", int(details.LintErr.Location.Start.Column)).
 		Int("end_line", int(details.LintErr.Location.End.Line)).
@@ -101,21 +105,24 @@ func formatLineTable(line string, lineNum int) string {
 }
 
 func formatAdditionalInfo(details LintErrorDetails) string {
-	moreInfoCmd := fmt.Sprintf("tfvet rule describe %s %s", details.Ruleset, details.Rule.ID)
-
 	data := [][]string{
 		{"• id:", details.Rule.ID},
 		{"• name:", details.Rule.Name},
 		{"• link:", details.Rule.Link},
-		{"• more info:", fmt.Sprintf("`%s`", moreInfoCmd)},
+		{"• documentation:", fmt.Sprintf("$ tfvet rule describe %s %s", details.Ruleset, details.Rule.ID)},
 	}
 
-	if details.LintErr.RemediationText != "" {
-		data = append(data, []string{"• remediation:", details.LintErr.RemediationText})
+	if details.LintErr.Suggestion != "" {
+		data = append(data, []string{"• suggestion:", details.LintErr.Suggestion})
 	}
-	if details.LintErr.RemediationCode != "" {
+	if details.LintErr.Remediation != "" {
 		data = append(data,
-			[]string{"• remediation:", fmt.Sprintf("`%s`", details.LintErr.RemediationCode)})
+			[]string{"• remediation:", fmt.Sprintf("`%s`", details.LintErr.Remediation)})
+	}
+	if len(details.LintErr.Metadata) != 0 {
+		metadata, _ := json.Marshal(details.LintErr.Metadata)
+		data = append(data,
+			[]string{"• metadata:", fmt.Sprintf("`%s`", metadata)})
 	}
 
 	tableString := &strings.Builder{}

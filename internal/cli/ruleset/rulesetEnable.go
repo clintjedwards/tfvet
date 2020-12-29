@@ -25,7 +25,6 @@ func runEnable(cmd *cobra.Command, args []string) error {
 
 	state, err := newState("Enabling ruleset", format)
 	if err != nil {
-		log.Println(err)
 		return err
 	}
 

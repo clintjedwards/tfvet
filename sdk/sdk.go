@@ -39,33 +39,24 @@ type Range struct {
 
 // RuleError represents a single lint error's details
 type RuleError struct {
-	RemediationText string
-	RemediationCode string
-	Location        Range
+	Suggestion  string
+	Remediation string
+	Location    Range
+	// metadata is a key value store that allows the rule to include extra data,
+	// that can be used by any tooling consuming said rule. For example "severity"
+	// might be something included in metadata.
+	Metadata map[string]string
 }
-
-// Severity is used to convey how serious the offending error is. This is passed in the output
-// of tfvet linting errors so that downstream tools can choose whether to surface them or not.
-type Severity string
-
-const (
-	SeverityUnknown  Severity = "unknown"
-	SeverityInfo              = "info"
-	SeverityWarning           = "warning"
-	SeverityError             = "error"
-	SeverityCritical          = "critical"
-)
 
 // GetRuleInfo returns information about the rule itself.
 func (rule *Rule) GetRuleInfo(request *proto.GetRuleInfoRequest) (*proto.GetRuleInfoResponse, error) {
 	ruleInfo := proto.GetRuleInfoResponse{
 		RuleInfo: &proto.RuleInfo{
-			Name:     rule.Name,
-			Short:    rule.Short,
-			Long:     rule.Long,
-			Severity: rule.Severity,
-			Link:     rule.Link,
-			Enabled:  rule.Enabled,
+			Name:    rule.Name,
+			Short:   rule.Short,
+			Long:    rule.Long,
+			Link:    rule.Link,
+			Enabled: rule.Enabled,
 		},
 	}
 
@@ -96,8 +87,9 @@ func ruleErrorsToProto(ruleErrors []RuleError) []*proto.RuleError {
 					Column: ruleError.Location.End.Column,
 				},
 			},
-			RemediationText: ruleError.RemediationText,
-			RemediationCode: ruleError.RemediationCode,
+			Suggestion:  ruleError.Suggestion,
+			Remediation: ruleError.Remediation,
+			Metadata:    ruleError.Metadata,
 		})
 	}
 
@@ -115,10 +107,6 @@ func (rule *Rule) isValid() bool {
 	}
 
 	if rule.Check == nil {
-		return false
-	}
-
-	if rule.Severity == string(models.SeverityUnknown) {
 		return false
 	}
 

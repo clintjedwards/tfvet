@@ -40,7 +40,6 @@ func runUpdate(cmd *cobra.Command, args []string) error {
 
 	state, err := newState("Updating ruleset", format)
 	if err != nil {
-		log.Println(err)
 		return err
 	}
 

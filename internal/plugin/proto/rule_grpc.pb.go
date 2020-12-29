@@ -129,5 +129,5 @@ var _TfvetRulePlugin_serviceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "plugin/proto/rule.proto",
+	Metadata: "internal/plugin/proto/rule.proto",
 }

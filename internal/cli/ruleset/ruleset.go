@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
 	"os"
 	"path/filepath"
 	"time"
@@ -43,13 +44,13 @@ func newState(initialFmtMsg, format string) (*state, error) {
 
 	clifmt, err := formatter.New(initialFmtMsg, formatter.Mode(format))
 	if err != nil {
+		log.Fatal(err)
 		return nil, err
 	}
 
 	cfg, err := appcfg.GetConfig()
 	if err != nil {
-		errText := fmt.Sprintf("config file `%s` does not exist."+
-			" Run `tfvet init` to create.", appcfg.ConfigFilePath())
+		errText := fmt.Sprintf("error reading config file %q: %v", appcfg.ConfigFilePath(), err)
 		clifmt.PrintFinalError(errText)
 		return nil, errors.New(errText)
 	}
@@ -144,7 +145,7 @@ func buildRulesetRules(s *state, ruleset string) error {
 	durationSeconds := float64(duration) / float64(time.Second)
 	timePerRule := float64(duration) / float64(count)
 
-	s.fmt.PrintSuccess(fmt.Sprintf("Compiled %d rules in %.2fs (average %.2fms/rule)",
+	s.fmt.PrintSuccess(fmt.Sprintf("Compiled %d rule(s) in %.2fs (average %.2fms/rule)",
 		count, durationSeconds, timePerRule/float64(time.Millisecond)))
 
 	return nil

@@ -12,7 +12,6 @@ message RuleInfo {
   bool enabled = 4;
   string error = 5; // short description on what the error is
   string link = 6;  // link to further documentation
-  string severity = 7;
 }
 
 message Position {
@@ -26,10 +25,14 @@ message Location {
 }
 
 message RuleError {
-  string remediation_text =
-      1; // a description of possible remediation for error
-  string remediation_code = 2; // program code for possible remediation
-  Location location = 3;       // start and end range of where error occurred
+  // a description of possible remediation for error
+  string suggestion = 1;
+  string remediation = 2; // program code for possible remediation
+  Location location = 3;  // start and end range of where error occurred
+  // metadata is a key value store that allows the rule to include extra data,
+  // that can be used by any tooling consuming said rule. For example "severity"
+  // might be something included in metadata.
+  map<string, string> metadata = 4;
 }
 
 service TfvetRulePlugin {
@@ -43,6 +46,6 @@ message GetRuleInfoResponse { RuleInfo rule_info = 1; }
 // ExecuteRuleRequest passes the byte string representation of an HCL file body.
 // It can be turned back into an hclwrite.File.Body object on reception.
 //
-// Expected back is a list of errors if any for the file passed to the plugin.
+// Expected back is a list of errors (if any) for the file passed to the plugin.
 message ExecuteRuleRequest { bytes hcl_file = 1; }
 message ExecuteRuleResponse { repeated RuleError errors = 1; }

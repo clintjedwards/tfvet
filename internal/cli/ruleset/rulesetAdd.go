@@ -135,13 +135,12 @@ func (s *state) getRuleInfo(ruleset, rule string) error {
 	}
 
 	err = s.cfg.UpsertRule(ruleset, models.Rule{
-		ID:       rule,
-		Name:     response.RuleInfo.Name,
-		Short:    response.RuleInfo.Short,
-		Long:     response.RuleInfo.Long,
-		Link:     response.RuleInfo.Link,
-		Severity: response.RuleInfo.Severity,
-		Enabled:  response.RuleInfo.Enabled,
+		ID:      rule,
+		Name:    response.RuleInfo.Name,
+		Short:   response.RuleInfo.Short,
+		Long:    response.RuleInfo.Long,
+		Link:    response.RuleInfo.Link,
+		Enabled: response.RuleInfo.Enabled,
 	})
 	if err != nil {
 		errText := fmt.Sprintf("could not add rule %s to config file: %v", rule, err)
@@ -181,7 +180,6 @@ func runAdd(cmd *cobra.Command, args []string) error {
 
 	state, err := newState("Adding ruleset", format)
 	if err != nil {
-		log.Println(err)
 		return err
 	}
 

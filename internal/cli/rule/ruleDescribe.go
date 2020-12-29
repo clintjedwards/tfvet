@@ -28,7 +28,6 @@ func runDescribe(cmd *cobra.Command, args []string) error {
 
 	state, err := newState("", format)
 	if err != nil {
-		log.Println(err)
 		return err
 	}
 
@@ -44,8 +43,8 @@ func runDescribe(cmd *cobra.Command, args []string) error {
 	state.fmt.PrintStandaloneMsg("")
 	state.fmt.PrintStandaloneMsg(strings.TrimPrefix(rule.Long, "\n"))
 	state.fmt.PrintStandaloneMsg("")
-	state.fmt.PrintStandaloneMsg(fmt.Sprintf("Severity: %s | Enabled: %s | Link: %s",
-		rule.Severity, strconv.FormatBool(rule.Enabled), rule.Link))
+	state.fmt.PrintStandaloneMsg(fmt.Sprintf("Enabled: %s | Link: %s",
+		strconv.FormatBool(rule.Enabled), rule.Link))
 
 	return nil
 }

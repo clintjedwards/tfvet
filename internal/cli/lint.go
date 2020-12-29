@@ -56,8 +56,7 @@ func newState(initialFmtMsg, format string) (*state, error) {
 
 	cfg, err := appcfg.GetConfig()
 	if err != nil {
-		errText := fmt.Sprintf("config file `%s` does not exist."+
-			" Run `tfvet init` to create.", appcfg.ConfigFilePath())
+		errText := fmt.Sprintf("error reading config file %q: %v", appcfg.ConfigFilePath(), err)
 		clifmt.PrintFinalError(errText)
 		return nil, errors.New(errText)
 	}

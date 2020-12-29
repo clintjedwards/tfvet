@@ -3,6 +3,7 @@ package rule
 import (
 	"errors"
 	"fmt"
+	"log"
 
 	"github.com/clintjedwards/tfvet/internal/cli/appcfg"
 	"github.com/clintjedwards/tfvet/internal/cli/formatter"
@@ -31,13 +32,13 @@ func newState(initialFmtMsg, format string) (*state, error) {
 
 	clifmt, err := formatter.New(initialFmtMsg, formatter.Mode(format))
 	if err != nil {
+		log.Fatal(err)
 		return nil, err
 	}
 
 	cfg, err := appcfg.GetConfig()
 	if err != nil {
-		errText := fmt.Sprintf("config file `%s` does not exist."+
-			" Run `tfvet init` to create.", appcfg.ConfigFilePath())
+		errText := fmt.Sprintf("error reading config file %q: %v", appcfg.ConfigFilePath(), err)
 		clifmt.PrintFinalError(errText)
 		return nil, errors.New(errText)
 	}
