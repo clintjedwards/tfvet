@@ -1,8 +1,13 @@
 package cli
 
 import (
+	"log"
+	"os"
+
+	"github.com/clintjedwards/tfvet/cli/appcfg"
 	"github.com/clintjedwards/tfvet/cli/rule"
 	"github.com/clintjedwards/tfvet/cli/ruleset"
+	"github.com/clintjedwards/tfvet/utils"
 	"github.com/spf13/cobra"
 )
 
@@ -20,7 +25,7 @@ var RootCmd = &cobra.Command{
 		cmd.SilenceErrors = true // Let us handle error printing ourselves
 
 		// Make sure the configuration is present on every run
-		err := runInit()
+		err := setup()
 		return err
 	},
 	Version: appVersion,
@@ -37,4 +42,33 @@ func init() {
 // Execute adds all child commands to the root command and sets flags appropriately.
 func Execute() error {
 	return RootCmd.Execute()
+}
+
+func setup() error {
+
+	err := utils.CreateDir(appcfg.ConfigPath())
+	if err != nil {
+		log.Println(err)
+		return err
+	}
+	err = utils.CreateDir(appcfg.RulesetsPath())
+	if err != nil {
+		log.Println(err)
+		return err
+	}
+
+	_, err = os.Stat(appcfg.ConfigFilePath())
+	if os.IsNotExist(err) {
+		err = appcfg.CreateNewFile()
+		if err != nil {
+			log.Println(err)
+			return err
+		}
+	} else if os.IsExist(err) {
+	} else if err != nil {
+		log.Println(err)
+		return err
+	}
+
+	return nil
 }
