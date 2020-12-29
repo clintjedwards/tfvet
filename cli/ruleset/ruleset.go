@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/Masterminds/semver"
 	"github.com/clintjedwards/tfvet/cli/appcfg"
 	"github.com/clintjedwards/tfvet/cli/formatter"
 	getter "github.com/hashicorp/go-getter/v2"
@@ -152,18 +153,17 @@ func buildRulesetRules(s *state, ruleset string) error {
 // verifyRuleset makes sure a downloaded ruleset has the correct structure.
 // specifically it:
 //
-//	* Makes sure the ruleset has a parseable ruleset.hcl file.
 //	* Makes sure the ruleset has a version and a name.
 //	* Makes sure the ruleset has a rules folder.
 func verifyRuleset(path string, info rulesetInfo) error {
 
-	//TODO(clintjedwards): Better validation of these
 	if len(info.Name) < 3 {
 		return errors.New("ruleset name cannot be less than 3 characters")
 	}
 
-	if len(info.Version) < 5 {
-		return errors.New("ruleset version text malformed; should be in semvar notation")
+	_, err := semver.NewVersion(info.Version)
+	if err != nil {
+		return fmt.Errorf("ruleset version text malformed; should be in semvar notation: %v", err)
 	}
 
 	rulesDirPath := fmt.Sprintf("%s/%s", path, "rules")
