@@ -5,8 +5,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/clintjedwards/tfvet/cli/appcfg"
-	"github.com/clintjedwards/tfvet/plugin/proto"
+	"github.com/clintjedwards/tfvet/internal/cli/models"
+	"github.com/clintjedwards/tfvet/internal/plugin/proto"
 	"github.com/olekukonko/tablewriter"
 	"github.com/rs/zerolog/log"
 )
@@ -16,7 +16,7 @@ type LintErrorDetails struct {
 	Filepath string
 	Line     string
 	Ruleset  string
-	Rule     appcfg.Rule
+	Rule     models.Rule
 	LintErr  *proto.RuleError
 }
 

@@ -5,7 +5,8 @@ import (
 	"log"
 
 	"github.com/Masterminds/semver"
-	"github.com/clintjedwards/tfvet/cli/appcfg"
+	"github.com/clintjedwards/tfvet/internal/cli/appcfg"
+	"github.com/clintjedwards/tfvet/internal/cli/models"
 	"github.com/spf13/cobra"
 )
 
@@ -73,7 +74,7 @@ func runUpdate(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func updateRuleset(s *state, ruleset appcfg.Ruleset) error {
+func updateRuleset(s *state, ruleset models.Ruleset) error {
 
 	s.fmt.PrintMsg("Retrieveing ruleset")
 	err := getRemoteRuleset(ruleset.Repository, appcfg.RepoPath(ruleset.Name))
@@ -112,7 +113,7 @@ func updateRuleset(s *state, ruleset appcfg.Ruleset) error {
 		ruleset.Name, ruleset.Version, info.Version))
 
 	s.fmt.PrintMsg("Updating ruleset")
-	err = s.cfg.UpdateRuleset(appcfg.Ruleset{
+	err = s.cfg.UpdateRuleset(models.Ruleset{
 		Name:       info.Name,
 		Version:    info.Version,
 		Repository: ruleset.Repository,

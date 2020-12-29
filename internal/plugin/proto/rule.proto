@@ -9,11 +9,10 @@ message RuleInfo {
   string name = 1;
   string short = 2;
   string long = 3;
-  bool default = 4;
+  bool enabled = 4;
   string error = 5; // short description on what the error is
   string link = 6;  // link to further documentation
-  enum Severity { UNKNOWN = 0; INFO = 1; WARNING = 2; ERROR = 3; }
-  Severity severity = 7;
+  string severity = 7;
 }
 
 message Position {

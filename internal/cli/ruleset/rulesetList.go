@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/clintjedwards/tfvet/cli/appcfg"
+	"github.com/clintjedwards/tfvet/internal/cli/models"
 	"github.com/olekukonko/tablewriter"
 	"github.com/spf13/cobra"
 )
@@ -50,7 +50,7 @@ func runList(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func formatAllRulesets(rulesets []appcfg.Ruleset) string {
+func formatAllRulesets(rulesets []models.Ruleset) string {
 	headers := []string{"Name", "Version", "Repository", "Enabled", "Rules"}
 	data := [][]string{}
 
@@ -86,7 +86,7 @@ func formatAllRulesets(rulesets []appcfg.Ruleset) string {
 	return tableString.String()
 }
 
-func formatRuleset(ruleset appcfg.Ruleset) string {
+func formatRuleset(ruleset models.Ruleset) string {
 
 	enabledStr := ""
 	if ruleset.Enabled {
@@ -107,7 +107,7 @@ func formatRuleset(ruleset appcfg.Ruleset) string {
 			rule.ID,
 			rule.Name,
 			rule.Short,
-			appcfg.SeverityToString(rule.Severity),
+			rule.Severity,
 			strconv.FormatBool(rule.Enabled),
 		})
 	}

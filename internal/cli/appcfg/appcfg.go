@@ -8,68 +8,16 @@ import (
 	"log"
 	"os"
 
+	"github.com/clintjedwards/tfvet/internal/cli/models"
 	"github.com/hashicorp/hcl/v2/gohcl"
 	"github.com/hashicorp/hcl/v2/hclsimple"
 	"github.com/hashicorp/hcl/v2/hclwrite"
 )
 
-//TODO(clintjedwards): Create and return custom errors
-
 // Appcfg represents the parsed hcl config of the main app configuration
 type Appcfg struct {
-	Rulesets []Ruleset         `hcl:"ruleset,block"`
-	RepoMap  map[string]string `hcl:"repo_map,optional"` // RepoMap is a mapping of repository to ruleset
-}
-
-// Ruleset represents a packaged set of rules that govern what tfvet checks for
-type Ruleset struct {
-	Name       string `hcl:"name,label"`
-	Version    string `hcl:"version"`
-	Repository string `hcl:"repository"`
-	Enabled    bool   `hcl:"enabled"`
-	Rules      []Rule `hcl:"rule,block"`
-}
-
-// RuleSeverity is used to convey how serious the offending error is. This is passed in the output
-// of tfvet linting errors so that downstream tools can choose whether to surface them or not.
-type RuleSeverity int
-
-const (
-	// Unknown is used when the severity is not supplied.
-	Unknown RuleSeverity = iota
-	// Info is used to convey general information about something which might not be immediately fixable.
-	Info
-	// Warning is used to convey things to watch out for that can potentially turn bad.
-	Warning
-	// Error is used to convey things that should change immediately.
-	Error
-)
-
-// SeverityToString converts a severity into a string
-func SeverityToString(severity int) string {
-	switch severity {
-	case int(Unknown):
-		return "Unknown"
-	case int(Info):
-		return "Info"
-	case int(Warning):
-		return "Warning"
-	case int(Error):
-		return "Error"
-	default:
-		return "Unknown"
-	}
-}
-
-// Rule represents a single lint check within a ruleset.
-type Rule struct {
-	ID       string `hcl:"id,label"`
-	Name     string `hcl:"name"`
-	Short    string `hcl:"short"`
-	Long     string `hcl:"long"`
-	Severity int    `hcl:"severity"`
-	Link     string `hcl:"link"`
-	Enabled  bool   `hcl:"enabled"`
+	Rulesets []models.Ruleset  `hcl:"ruleset,block"`
+	RepoMap  map[string]string `hcl:"repo_map,optional"` // RepoMap is a mapping of repository to ruleset.
 }
 
 // CreateNewFile creates a new empty config file
@@ -117,7 +65,7 @@ func (appcfg *Appcfg) RepositoryExists(name string) bool {
 }
 
 // AddRuleset adds a new ruleset if it doesn't exist.
-func (appcfg *Appcfg) AddRuleset(rs Ruleset) error {
+func (appcfg *Appcfg) AddRuleset(rs models.Ruleset) error {
 	if appcfg.rulesetExists(rs.Name) {
 		return errors.New("ruleset already exists")
 	}
@@ -133,7 +81,7 @@ func (appcfg *Appcfg) AddRuleset(rs Ruleset) error {
 }
 
 // UpdateRuleset updates and existing ruleset
-func (appcfg *Appcfg) UpdateRuleset(rs Ruleset) error {
+func (appcfg *Appcfg) UpdateRuleset(rs models.Ruleset) error {
 	for index, ruleset := range appcfg.Rulesets {
 		if ruleset.Name != rs.Name {
 			continue
@@ -165,7 +113,7 @@ func (appcfg *Appcfg) rulesetExists(name string) bool {
 
 // UpsertRule adds a new rule to an already established ruleset if it does not exist. If the rule
 // already exists it simply updates the rule with the newer information.
-func (appcfg *Appcfg) UpsertRule(rulesetName string, newRule Rule) error {
+func (appcfg *Appcfg) UpsertRule(rulesetName string, newRule models.Rule) error {
 	for index, ruleset := range appcfg.Rulesets {
 		if ruleset.Name != rulesetName {
 			continue
@@ -288,7 +236,7 @@ func (appcfg *Appcfg) EnableRule(ruleset, rule string) error {
 }
 
 // GetRuleset is a convenience function that returns the ruleset object of a given name
-func (appcfg *Appcfg) GetRuleset(name string) (Ruleset, error) {
+func (appcfg *Appcfg) GetRuleset(name string) (models.Ruleset, error) {
 	for _, ruleset := range appcfg.Rulesets {
 		if ruleset.Name != name {
 			continue
@@ -297,11 +245,11 @@ func (appcfg *Appcfg) GetRuleset(name string) (Ruleset, error) {
 		return ruleset, nil
 	}
 
-	return Ruleset{}, errors.New("ruleset not found")
+	return models.Ruleset{}, errors.New("ruleset not found")
 }
 
 // GetRule is a convenience function that returns the rule object of a given name
-func (appcfg *Appcfg) GetRule(rulesetName, ruleName string) (Rule, error) {
+func (appcfg *Appcfg) GetRule(rulesetName, ruleName string) (models.Rule, error) {
 	for _, ruleset := range appcfg.Rulesets {
 		if ruleset.Name != rulesetName {
 			continue
@@ -315,10 +263,10 @@ func (appcfg *Appcfg) GetRule(rulesetName, ruleName string) (Rule, error) {
 			return rule, nil
 		}
 
-		return Rule{}, errors.New("rule not found")
+		return models.Rule{}, errors.New("rule not found")
 	}
 
-	return Rule{}, errors.New("ruleset not found")
+	return models.Rule{}, errors.New("ruleset not found")
 }
 
 // writeConfig takes the current representation of config and writes it to the file.

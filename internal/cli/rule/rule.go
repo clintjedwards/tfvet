@@ -4,8 +4,8 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/clintjedwards/tfvet/cli/appcfg"
-	"github.com/clintjedwards/tfvet/cli/formatter"
+	"github.com/clintjedwards/tfvet/internal/cli/appcfg"
+	"github.com/clintjedwards/tfvet/internal/cli/formatter"
 	"github.com/spf13/cobra"
 )
 

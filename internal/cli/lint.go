@@ -12,11 +12,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/clintjedwards/tfvet/cli/appcfg"
-	"github.com/clintjedwards/tfvet/cli/formatter"
-	tfvetPlugin "github.com/clintjedwards/tfvet/plugin"
-	"github.com/clintjedwards/tfvet/plugin/proto"
-	"github.com/clintjedwards/tfvet/utils"
+	"github.com/clintjedwards/tfvet/internal/cli/appcfg"
+	"github.com/clintjedwards/tfvet/internal/cli/formatter"
+	"github.com/clintjedwards/tfvet/internal/cli/models"
+	tfvetPlugin "github.com/clintjedwards/tfvet/internal/plugin"
+	"github.com/clintjedwards/tfvet/internal/plugin/proto"
+	"github.com/clintjedwards/tfvet/internal/utils"
 	"github.com/hashicorp/go-hclog"
 	"github.com/hashicorp/go-plugin"
 	"github.com/hashicorp/hcl/v2/hclparse"
@@ -231,7 +232,7 @@ func (s *state) lintFile(file *os.File) error {
 	return nil
 }
 
-func (s *state) runRule(ruleset string, rule appcfg.Rule, filepath string, rawHCLFile []byte) error {
+func (s *state) runRule(ruleset string, rule models.Rule, filepath string, rawHCLFile []byte) error {
 	tmpPluginName := "tfvetPlugin"
 
 	client := plugin.NewClient(&plugin.ClientConfig{

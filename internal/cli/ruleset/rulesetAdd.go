@@ -11,10 +11,11 @@ import (
 
 	"hash/fnv"
 
-	"github.com/clintjedwards/tfvet/cli/appcfg"
-	tfvetPlugin "github.com/clintjedwards/tfvet/plugin"
-	"github.com/clintjedwards/tfvet/plugin/proto"
-	"github.com/clintjedwards/tfvet/utils"
+	"github.com/clintjedwards/tfvet/internal/cli/appcfg"
+	"github.com/clintjedwards/tfvet/internal/cli/models"
+	tfvetPlugin "github.com/clintjedwards/tfvet/internal/plugin"
+	"github.com/clintjedwards/tfvet/internal/plugin/proto"
+	"github.com/clintjedwards/tfvet/internal/utils"
 	"github.com/hashicorp/go-hclog"
 	"github.com/hashicorp/go-plugin"
 	"github.com/otiai10/copy"
@@ -133,14 +134,14 @@ func (s *state) getRuleInfo(ruleset, rule string) error {
 		return errors.New(errText)
 	}
 
-	err = s.cfg.UpsertRule(ruleset, appcfg.Rule{
+	err = s.cfg.UpsertRule(ruleset, models.Rule{
 		ID:       rule,
 		Name:     response.RuleInfo.Name,
 		Short:    response.RuleInfo.Short,
 		Long:     response.RuleInfo.Long,
 		Link:     response.RuleInfo.Link,
-		Severity: int(response.RuleInfo.Severity),
-		Enabled:  response.RuleInfo.Default,
+		Severity: response.RuleInfo.Severity,
+		Enabled:  response.RuleInfo.Enabled,
 	})
 	if err != nil {
 		errText := fmt.Sprintf("could not add rule %s to config file: %v", rule, err)
@@ -225,7 +226,7 @@ func runAdd(cmd *cobra.Command, args []string) error {
 	state.fmt.PrintSuccess("Verified ruleset")
 
 	state.fmt.PrintMsg("Adding ruleset to config")
-	err = state.cfg.AddRuleset(appcfg.Ruleset{
+	err = state.cfg.AddRuleset(models.Ruleset{
 		Name:       info.Name,
 		Version:    info.Version,
 		Repository: repoLocation,

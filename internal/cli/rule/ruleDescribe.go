@@ -6,7 +6,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/clintjedwards/tfvet/cli/appcfg"
 	"github.com/spf13/cobra"
 )
 
@@ -46,7 +45,7 @@ func runDescribe(cmd *cobra.Command, args []string) error {
 	state.fmt.PrintStandaloneMsg(strings.TrimPrefix(rule.Long, "\n"))
 	state.fmt.PrintStandaloneMsg("")
 	state.fmt.PrintStandaloneMsg(fmt.Sprintf("Severity: %s | Enabled: %s | Link: %s",
-		appcfg.SeverityToString(rule.Severity), strconv.FormatBool(rule.Enabled), rule.Link))
+		rule.Severity, strconv.FormatBool(rule.Enabled), rule.Link))
 
 	return nil
 }

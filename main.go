@@ -3,7 +3,7 @@ package main
 import (
 	"os"
 
-	"github.com/clintjedwards/tfvet/cli"
+	"github.com/clintjedwards/tfvet/internal/cli"
 )
 
 func main() {

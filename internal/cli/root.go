@@ -4,10 +4,10 @@ import (
 	"log"
 	"os"
 
-	"github.com/clintjedwards/tfvet/cli/appcfg"
-	"github.com/clintjedwards/tfvet/cli/rule"
-	"github.com/clintjedwards/tfvet/cli/ruleset"
-	"github.com/clintjedwards/tfvet/utils"
+	"github.com/clintjedwards/tfvet/internal/cli/appcfg"
+	"github.com/clintjedwards/tfvet/internal/cli/rule"
+	"github.com/clintjedwards/tfvet/internal/cli/ruleset"
+	"github.com/clintjedwards/tfvet/internal/utils"
 	"github.com/spf13/cobra"
 )
 

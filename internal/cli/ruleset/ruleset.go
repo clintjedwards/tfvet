@@ -9,8 +9,8 @@ import (
 	"time"
 
 	"github.com/Masterminds/semver"
-	"github.com/clintjedwards/tfvet/cli/appcfg"
-	"github.com/clintjedwards/tfvet/cli/formatter"
+	"github.com/clintjedwards/tfvet/internal/cli/appcfg"
+	"github.com/clintjedwards/tfvet/internal/cli/formatter"
 	getter "github.com/hashicorp/go-getter/v2"
 	"github.com/hashicorp/hcl/v2/hclsimple"
 	"github.com/spf13/cobra"

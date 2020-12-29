@@ -2,6 +2,8 @@ package config
 
 import "github.com/kelseyhightower/envconfig"
 
+// Config represents the application config.
+// This makes it possible for the user to change the default path of the config files.
 type Config struct {
 	ConfigPath string `split_words:"true" default:"~/.tfvet.d"`
 }
