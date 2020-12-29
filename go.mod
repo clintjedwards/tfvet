@@ -3,6 +3,7 @@ module github.com/clintjedwards/tfvet
 go 1.15
 
 require (
+	github.com/Masterminds/semver v1.5.0
 	github.com/agext/levenshtein v1.2.3 // indirect
 	github.com/cespare/xxhash/v2 v2.1.1
 	github.com/fatih/color v1.10.0 // indirect

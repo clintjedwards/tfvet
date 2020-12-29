@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/Masterminds/semver"
 	"github.com/clintjedwards/tfvet/cli/appcfg"
 	"github.com/spf13/cobra"
 )
@@ -92,8 +93,17 @@ func updateRuleset(s *state, ruleset appcfg.Ruleset) error {
 		return err
 	}
 
-	// TODO(clintjedwards): We should probably parse this into semver first
-	if info.Version == ruleset.Version {
+	newSemver, err := semver.NewVersion(info.Version)
+	if err != nil {
+		return err
+	}
+
+	oldSemver, err := semver.NewVersion(ruleset.Version)
+	if err != nil {
+		return err
+	}
+
+	if !newSemver.GreaterThan(oldSemver) {
 		s.fmt.PrintSuccess(fmt.Sprintf("Ruleset %s at newest version (%s)", ruleset.Name, ruleset.Version))
 		return nil
 	}
