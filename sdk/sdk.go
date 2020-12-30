@@ -3,7 +3,6 @@ package sdk
 import (
 	"log"
 
-	"github.com/clintjedwards/tfvet/internal/cli/models"
 	tfvetPlugin "github.com/clintjedwards/tfvet/internal/plugin"
 	proto "github.com/clintjedwards/tfvet/internal/plugin/proto"
 	"github.com/hashicorp/go-plugin"
@@ -19,9 +18,14 @@ type Check interface {
 }
 
 // Rule is the representation of a single rule within tfvet.
-// This just combines the rule
+// This just combines the rule with the check interface.
+// This should be kept in lockstep with the Rule model from the tfvet package.
 type Rule struct {
-	models.Rule
+	Name    string
+	Short   string
+	Long    string
+	Link    string
+	Enabled bool
 	Check
 }
 
