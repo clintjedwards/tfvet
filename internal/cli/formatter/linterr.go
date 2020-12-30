@@ -109,7 +109,6 @@ func formatAdditionalInfo(details LintErrorDetails) string {
 		{"• id:", details.Rule.ID},
 		{"• name:", details.Rule.Name},
 		{"• link:", details.Rule.Link},
-		{"• documentation:", fmt.Sprintf("$ tfvet rule describe %s %s", details.Ruleset, details.Rule.ID)},
 	}
 
 	if details.LintErr.Suggestion != "" {
@@ -119,10 +118,16 @@ func formatAdditionalInfo(details LintErrorDetails) string {
 		data = append(data,
 			[]string{"• remediation:", fmt.Sprintf("`%s`", details.LintErr.Remediation)})
 	}
+
+	// We put documentation down here because it's a long line and looks pretty
+	data = append(data, []string{"• documentation:", fmt.Sprintf("$ tfvet rule describe %s %s", details.Ruleset, details.Rule.ID)})
+
 	if len(details.LintErr.Metadata) != 0 {
-		metadata, _ := json.Marshal(details.LintErr.Metadata)
-		data = append(data,
-			[]string{"• metadata:", fmt.Sprintf("`%s`", metadata)})
+		for key, value := range details.LintErr.Metadata {
+			data = append(data,
+				[]string{fmt.Sprintf("• %s", key), value},
+			)
+		}
 	}
 
 	tableString := &strings.Builder{}
