@@ -31,7 +31,7 @@ func runEnable(cmd *cobra.Command, args []string) error {
 
 	state.fmt.PrintMsg(rule)
 
-	err = state.cfg.EnableRule(ruleset, rule)
+	err = state.cfg.SetRuleEnabled(ruleset, rule, true)
 	if err != nil {
 		state.fmt.PrintFinalError(fmt.Sprintf("could not enable rule: %v", err))
 		return err
