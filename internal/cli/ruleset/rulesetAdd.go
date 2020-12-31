@@ -128,6 +128,9 @@ func getRulePluginClient(ruleset, ruleID string) (client *plugin.Client, rule tf
 // getRuleInfo retrieves information by calling the GetRuleInfo method on the rule plugin.
 func getRuleInfo(ruleset, ruleID string) (models.Rule, error) {
 	c, plugin, err := getRulePluginClient(ruleset, ruleID)
+	if err != nil {
+		return models.Rule{}, fmt.Errorf("could not get rule info for %s: %w", ruleID, err)
+	}
 	defer c.Kill()
 
 	response, err := plugin.GetRuleInfo(&proto.GetRuleInfoRequest{})
