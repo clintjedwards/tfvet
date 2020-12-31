@@ -6,6 +6,7 @@ import "github.com/kelseyhightower/envconfig"
 // This makes it possible for the user to change the default path of the config files.
 type Config struct {
 	ConfigPath string `split_words:"true" default:"~/.tfvet.d"`
+	LogLevel   string `split_words:"true" default:"info"`
 }
 
 // FromEnv parses environment variables into the config object based on envconfig name

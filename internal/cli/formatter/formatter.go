@@ -7,6 +7,9 @@ import (
 	"strings"
 	"time"
 
+	golog "log"
+
+	"github.com/clintjedwards/tfvet/internal/config"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"github.com/theckman/yacspin"
@@ -31,14 +34,20 @@ const (
 	JSON Mode = "json"
 )
 
-// New provides a new formatter with output format determined by the mode.
+// New provides a formatter with output format determined by the mode.
 //
-// If the formatter detects that it is within a TTY in pretty mode it will switch to plain mode.
+// If the formatter detects that it is within a TTY and in pretty mode, it will switch to plain mode.
 // This avoids any mistaken garbaled output for none terminal destinations.
 //
-// The suffix parameter is only applicable to pretty mode; suffix is the string of text printed
-// right after the spinner. Hence the name, despite there being other text after it.
+// The suffix parameter is only applicable to pretty mode.
+// Suffix is the string of text printed right after the spinner.
+// (Hence the name, despite there being other text after it.)
 func New(suffix string, mode Mode) (*Formatter, error) {
+
+	config, err := config.FromEnv()
+	if err != nil {
+		return nil, fmt.Errorf("could not access config: %w", err)
+	}
 
 	// If we can't pretty print into it just fallback to normal logging
 	if mode == Pretty && !isTTY() {
@@ -51,9 +60,9 @@ func New(suffix string, mode Mode) (*Formatter, error) {
 
 	switch mode {
 	case Plain:
-		newPlainLogger()
+		newPlainLogger(parseLogLevel(config.LogLevel))
 	case JSON:
-		newJSONLogger()
+		newJSONLogger(parseLogLevel(config.LogLevel))
 	case Pretty:
 		cfg := yacspin.Config{
 			Writer:            os.Stderr,
@@ -82,15 +91,35 @@ func New(suffix string, mode Mode) (*Formatter, error) {
 	return formatter, nil
 }
 
-func newPlainLogger() {
+func parseLogLevel(loglevel string) zerolog.Level {
+	switch loglevel {
+	case "debug":
+		return zerolog.DebugLevel
+	case "info":
+		return zerolog.InfoLevel
+	case "warn":
+		return zerolog.WarnLevel
+	case "error":
+		return zerolog.ErrorLevel
+	case "fatal":
+		return zerolog.FatalLevel
+	case "panic":
+		return zerolog.PanicLevel
+	default:
+		golog.Printf("loglevel %s not recognized; defaulting to debug", loglevel)
+		return zerolog.DebugLevel
+	}
+}
+
+func newPlainLogger(level zerolog.Level) {
 	zerolog.TimeFieldFormat = zerolog.TimeFormatUnix
-	zerolog.SetGlobalLevel(zerolog.InfoLevel)
+	zerolog.SetGlobalLevel(level)
 	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr})
 }
 
-func newJSONLogger() {
+func newJSONLogger(level zerolog.Level) {
 	zerolog.TimeFieldFormat = zerolog.TimeFormatUnix
-	zerolog.SetGlobalLevel(zerolog.InfoLevel)
+	zerolog.SetGlobalLevel(level)
 }
 
 // newSpinner creates a brand new pretty mode spinner from config and starts it.
@@ -112,7 +141,8 @@ func isTTY() bool {
 	return false
 }
 
-// PrintMsg displays a simple message. In pretty mode it will display it after the suffix text.
+// PrintMsg outputs a simple message.
+// In pretty mode it will display it after the suffix text.
 func (f *Formatter) PrintMsg(msg string) {
 	if f.mode == Pretty {
 		f.spinner.Message(msg)
@@ -122,9 +152,9 @@ func (f *Formatter) PrintMsg(msg string) {
 	log.Info().Msg(msg)
 }
 
-// PrintStandaloneMsg displays a message unattached to the spinner.
+// PrintStandaloneMsg outputs a message unattached to the spinner or suffix text.
 // In pretty mode this causes the spinner to first stop, print the message, and then immediately
-// start a new spinner.
+// start a new spinner as to not cause the spinner suffix text to be printed.
 func (f *Formatter) PrintStandaloneMsg(msg string) {
 	if f.mode == Pretty {
 		f.spinner.Suffix("")
@@ -148,7 +178,8 @@ func (f *Formatter) PrintStandaloneMsg(msg string) {
 	log.Info().Msg(msg)
 }
 
-// PrintError displays an error. Pretty mode it will cause it to print the message replacing the
+// PrintError outputs an error.
+// In pretty mode it will cause it to print the message replacing the
 // current suffix and immediately start a new spinner.
 func (f *Formatter) PrintError(suffix, msg string) {
 	if f.mode == Pretty {
@@ -180,8 +211,9 @@ func (f *Formatter) PrintFinalError(msg string) {
 	log.Error().Msg(msg)
 }
 
-// PrintSuccess prints a success message. Pretty mode will cause it to print the message
-// replacing the current suffix and immediately start a new spinner.
+// PrintSuccess outputs a success message.
+// Pretty mode will cause it to print the message with a checkmark, replacing the current suffix,
+// and immediately start a new spinner.
 func (f *Formatter) PrintSuccess(msg string) {
 	if f.mode == Pretty {
 		f.spinner.Suffix(fmt.Sprintf(" %s", msg))

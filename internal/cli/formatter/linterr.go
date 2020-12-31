@@ -23,8 +23,8 @@ type LintErrorDetails struct {
 
 // PrintLintError formats and prints details from a lint error.
 //
-// It borrows(see blatantly copies) a lot from rust style errors:
-// https://blog.rust-lang.org/2016/08/10/Shape-of-errors-to-come.html
+// It borrows(blatantly copies) from rust style errors:
+// https://doc.rust-lang.org/edition-guide/rust-2018/the-compiler/improved-error-messages.html
 //
 // Example format:
 //
@@ -45,7 +45,7 @@ x Error: lolwut is inherently unsafe; see link for more details
 func (f *Formatter) PrintLintError(details LintErrorDetails) {
 	if f.mode == Pretty {
 		// First notify the user of an error and print the short error description.
-		f.PrintError("Error", strings.ToLower(details.Rule.Short))
+		f.PrintError(fmt.Sprintf("Error[%s]", details.Rule.ID), strings.ToLower(details.Rule.Short))
 		// Next print the filename along with the starting line and column
 		f.PrintStandaloneMsg(fmt.Sprintf("  --> %s:%d:%d\n",
 			details.Filepath, details.LintErr.Location.Start.Line, details.LintErr.Location.Start.Column))
@@ -54,6 +54,10 @@ func (f *Formatter) PrintLintError(details LintErrorDetails) {
 		f.PrintStandaloneMsg("  = additional information:\n")
 		f.PrintStandaloneMsg(formatAdditionalInfo(details))
 		f.PrintStandaloneMsg("\n")
+		f.PrintStandaloneMsg(
+			fmt.Sprintf("For more information about this error, try `tfvet rule describe %s %s`.",
+				details.Ruleset, details.Rule.ID))
+		f.PrintStandaloneMsg("\n")
 		return
 	}
 
@@ -61,7 +65,8 @@ func (f *Formatter) PrintLintError(details LintErrorDetails) {
 
 	log.Error().
 		Str("type", "linterror").
-		Str("name", details.Rule.ID).
+		Str("id", details.Rule.ID).
+		Str("name", details.Rule.Name).
 		Str("short", details.Rule.Short).
 		Str("link", details.Rule.Link).
 		Str("line", details.Line).
@@ -106,26 +111,22 @@ func formatLineTable(line string, lineNum int) string {
 
 func formatAdditionalInfo(details LintErrorDetails) string {
 	data := [][]string{
-		{"• id:", details.Rule.ID},
-		{"• name:", details.Rule.Name},
-		{"• link:", details.Rule.Link},
+		{" ", "• name:", details.Rule.Name},
+		{" ", "• link:", details.Rule.Link},
 	}
 
 	if details.LintErr.Suggestion != "" {
-		data = append(data, []string{"• suggestion:", details.LintErr.Suggestion})
+		data = append(data, []string{" ", "• suggestion:", details.LintErr.Suggestion})
 	}
 	if details.LintErr.Remediation != "" {
 		data = append(data,
-			[]string{"• remediation:", fmt.Sprintf("`%s`", details.LintErr.Remediation)})
+			[]string{" ", "• remediation:", fmt.Sprintf("`%s`", details.LintErr.Remediation)})
 	}
-
-	// We put documentation down here because it's a long line and looks pretty
-	data = append(data, []string{"• documentation:", fmt.Sprintf("$ tfvet rule describe %s %s", details.Ruleset, details.Rule.ID)})
 
 	if len(details.LintErr.Metadata) != 0 {
 		for key, value := range details.LintErr.Metadata {
 			data = append(data,
-				[]string{fmt.Sprintf("• %s", key), value},
+				[]string{" ", fmt.Sprintf("• %s", key), value},
 			)
 		}
 	}
