@@ -75,7 +75,7 @@ func RepoRulesPath(ruleset string) string {
 }
 
 // RulePath returns the absolute path for a rule within a ruleset directory.
-// By default this is ~/.tfvet.d/rulesets.d/<ruleset>/<rule_ID>
+// By default this is ~/.tfvet.d/rulesets.d/<ruleset>/<ruleID>
 func RulePath(ruleset, ruleID string) string {
 	return fmt.Sprintf("%s/%s", RulesetPath(ruleset), ruleID)
 }

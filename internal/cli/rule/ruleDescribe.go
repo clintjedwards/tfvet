@@ -19,7 +19,7 @@ var cmdRuleDescribe = &cobra.Command{
 
 func runDescribe(cmd *cobra.Command, args []string) error {
 	ruleset := args[0]
-	ruleName := args[1]
+	ruleID := args[1]
 
 	format, err := cmd.Flags().GetString("format")
 	if err != nil {
@@ -31,12 +31,23 @@ func runDescribe(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	rule, err := state.cfg.GetRule(ruleset, ruleName)
+	rule, err := state.cfg.GetRule(ruleset, ruleID)
 	if err != nil {
 		state.fmt.PrintFinalError(fmt.Sprintf("could not describe rule %v", err))
 		return err
 	}
 
+	// Example of output
+	//
+	// 	[d2d21] No resource with the name 'example'
+	//
+	// Example is a poor name for a resource and might lead to naming collisions.
+	//
+	// This is simply a test description of a resource that effectively alerts on nothingness.
+	// In turn this is essentially a really long description so we can test that our descriptions
+	// work properly and are displayed properly in the terminal.
+	//
+	// Enabled: true | Link: https://google.com
 	state.fmt.PrintStandaloneMsg(fmt.Sprintf("[%s] %s", rule.ID, rule.Name))
 	state.fmt.PrintStandaloneMsg("")
 	state.fmt.PrintStandaloneMsg(rule.Short)

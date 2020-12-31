@@ -175,7 +175,11 @@ func (f *Formatter) PrintStandaloneMsg(msg string) {
 		return
 	}
 
-	log.Info().Msg(msg)
+	// Sometimes we use standalone to print empty lines in pretty mode.
+	// Skip printing those in plain or json mode.
+	if msg != "" {
+		log.Info().Msg(msg)
+	}
 }
 
 // PrintError outputs an error.

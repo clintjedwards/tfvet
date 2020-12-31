@@ -123,7 +123,7 @@ func updateRuleset(s *state, ruleset models.Ruleset) error {
 		return err
 	}
 
-	err = buildRulesetRules(s, info.Name)
+	err = buildAllRules(s, info.Name)
 	if err != nil {
 		return err
 	}

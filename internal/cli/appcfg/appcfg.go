@@ -206,14 +206,14 @@ func (appcfg *Appcfg) GetRuleset(name string) (models.Ruleset, error) {
 
 // GetRule returns the rule object of a given name.
 // Returns an error if ruleset or rule isn't found.
-func (appcfg *Appcfg) GetRule(rulesetName, ruleName string) (models.Rule, error) {
+func (appcfg *Appcfg) GetRule(rulesetName, ruleID string) (models.Rule, error) {
 	for _, ruleset := range appcfg.Rulesets {
 		if ruleset.Name != rulesetName {
 			continue
 		}
 
 		for _, rule := range ruleset.Rules {
-			if rule.ID != ruleName {
+			if rule.ID != ruleID {
 				continue
 			}
 

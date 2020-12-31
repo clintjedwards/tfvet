@@ -28,18 +28,19 @@ Rulesets are a grouping of rules that are used to lint documents.
 The ruleset subcommand allows you to retrieve, remove, and otherwise manipulate particular rulesets.`,
 }
 
-// state contains a bunch of useful state information for cli functions.
+// state tracks application state over the time it takes a command to run.
 type state struct {
 	fmt *formatter.Formatter
 	cfg *appcfg.Appcfg
 }
 
+// rulesetInfo is the struct representation of the ruleset.hcl file included in all ruleset repos.
 type rulesetInfo struct {
 	Name    string `hcl:"name"`
 	Version string `hcl:"version"`
 }
 
-// newState returns a new state object with the fmt initialized
+// newState returns a new initialized state object
 func newState(initialFmtMsg, format string) (*state, error) {
 
 	clifmt, err := formatter.New(initialFmtMsg, formatter.Mode(format))
@@ -61,19 +62,20 @@ func newState(initialFmtMsg, format string) (*state, error) {
 	}, nil
 }
 
-// getRemoteRuleset is used to retrieve a ruleset from any path given
-// (supports a wide range of remote and local)
+// getRemoteRuleset is used to retrieve a ruleset from the path given
+// It supports a wide range of remote and local paths
 //
-// See  https://github.com/hashicorp/go-getter#url-format formats accepted
+// See https://github.com/hashicorp/go-getter#url-format for accepted formats.
 func getRemoteRuleset(srcPath, dstPath string) error {
 	_, err := getter.Get(context.Background(), dstPath, srcPath)
 	if err != nil {
 		return err
 	}
 
-	return err
+	return nil
 }
 
+// getRemoteRulesetInfo parses the ruleset.hcl file that must be included in all ruleset repos.
 func getRemoteRulesetInfo(repoPath string) (rulesetInfo, error) {
 	var info rulesetInfo
 
@@ -86,9 +88,9 @@ func getRemoteRulesetInfo(repoPath string) (rulesetInfo, error) {
 	return info, nil
 }
 
-// buildRulesetRules builds the rules plugins and places the binary underneath the correct ruleset.
-// TODO(clintjedwards): Remove the addRule bool
-func buildRulesetRules(s *state, ruleset string) error {
+// buildAllRules builds the plugins(rules are plugins) and places the binary
+// underneath the correct ruleset directory.
+func buildAllRules(s *state, ruleset string) error {
 	s.fmt.PrintMsg("Opening rules directory")
 
 	file, err := os.Open(appcfg.RepoRulesPath(ruleset))
@@ -99,6 +101,7 @@ func buildRulesetRules(s *state, ruleset string) error {
 	}
 	defer file.Close()
 
+	// get a list of all folders within the rules directory, which should represent rules.
 	fileList, err := file.Readdir(0)
 	if err != nil {
 		errText := fmt.Sprintf("could not read rules folder: %v", err)
@@ -116,27 +119,45 @@ func buildRulesetRules(s *state, ruleset string) error {
 			continue
 		}
 
-		// Get the filename and not the full path
-		// Sometimes file.Name will return the full path based on what is passed to file.Open
-		fileName := filepath.Base(file.Name())
+		// Get the dirname and not the full path.
+		// Sometimes file.Name will return the full path based on what is passed to file.Open.
+		dirName := filepath.Base(file.Name())
 
-		s.fmt.PrintMsg(fmt.Sprintf("Compiling %s", fileName))
+		s.fmt.PrintMsg(fmt.Sprintf("Compiling %s", dirName))
 
-		rawRulePath := fmt.Sprintf("%s/%s", appcfg.RepoRulesPath(ruleset), fileName)
+		rawRulePath := fmt.Sprintf("%s/%s", appcfg.RepoRulesPath(ruleset), dirName)
 
-		// we take the hash of the filename(aka the rule folder name) and make it the rule ID
-		ruleID := generateHash(fileName)
+		// We take the hash of the dirname(aka the rule folder name) and make it the rule ID.
+		// This allows us to have consistent ids for rules without having to have the ruleset
+		// (aka the user) define them.
+		//
+		// TODO(clintjedwards): Collision detection isn't built in and will probably break
+		// things if it ever does happen.
+		ruleID := generateHash(dirName)
 
+		// We build here by pointing the golang binary on the user's computer to the rule path.
+		// This causes the compiler to compile whatever is in that path and spit out a binary
+		// where ever we want.
 		_, err := buildRule(rawRulePath, appcfg.RulePath(ruleset, ruleID))
 		if err != nil {
-			errText := fmt.Sprintf("could not build rule %s: %v", fileName, err)
+			errText := fmt.Sprintf("could not build rule %s: %v", dirName, err)
 			s.fmt.PrintFinalError(errText)
 			return errors.New(errText)
 		}
 
-		err = s.getRuleInfo(ruleset, ruleID)
+		s.fmt.PrintMsg(fmt.Sprintf("Collecting rule info for: %s", dirName))
+		newRule, err := getRuleInfo(ruleset, ruleID)
 		if err != nil {
-			return err
+			errText := fmt.Sprintf("could not build rule %s: %v", dirName, err)
+			s.fmt.PrintFinalError(errText)
+			return errors.New(errText)
+		}
+
+		err = s.cfg.UpsertRule(ruleset, newRule)
+		if err != nil {
+			errText := fmt.Sprintf("could not upsert rule %s to config file: %v", dirName, err)
+			s.fmt.PrintFinalError(errText)
+			return errors.New(errText)
 		}
 		count++
 	}
@@ -152,12 +173,9 @@ func buildRulesetRules(s *state, ruleset string) error {
 }
 
 // verifyRuleset makes sure a downloaded ruleset has the correct structure.
-// specifically it:
-//
-//	* Makes sure the ruleset has a version and a name.
+//	* Makes sure the ruleset has a proper version and name.
 //	* Makes sure the ruleset has a rules folder.
 func verifyRuleset(path string, info rulesetInfo) error {
-
 	if len(info.Name) < 3 {
 		return errors.New("ruleset name cannot be less than 3 characters")
 	}
@@ -167,6 +185,7 @@ func verifyRuleset(path string, info rulesetInfo) error {
 		return fmt.Errorf("ruleset version text malformed; should be in semvar notation: %v", err)
 	}
 
+	// Must have a /rules directory
 	rulesDirPath := fmt.Sprintf("%s/%s", path, "rules")
 	if _, err := os.Stat(rulesDirPath); os.IsNotExist(err) {
 		return errors.New("no rules directory found; all rulesets must have a rules directory")

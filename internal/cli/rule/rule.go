@@ -10,7 +10,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// CmdRule is a subcommand for rule
+// CmdRule is a subcommand for rule.
 var CmdRule = &cobra.Command{
 	Use:   "rule",
 	Short: "Manage linting rules",
@@ -21,13 +21,13 @@ Rules are the constraints on which tfvet lints documents against.
 The rule subcommand allows you to describe, enable, and otherwise manipulate particular rules.`,
 }
 
-// state contains a bunch of useful state information for cli functions.
+// state tracks application state over the time it takes a command to run.
 type state struct {
 	fmt *formatter.Formatter
 	cfg *appcfg.Appcfg
 }
 
-// newState returns a new state object with the fmt initialized
+// newState returns a new initialized state object
 func newState(initialFmtMsg, format string) (*state, error) {
 
 	clifmt, err := formatter.New(initialFmtMsg, formatter.Mode(format))

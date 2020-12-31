@@ -28,13 +28,14 @@ const (
 
 var cmdRulesetAdd = &cobra.Command{
 	Use:   "add <repository>",
-	Short: "Downloads, adds, and enables a new ruleset",
-	Long: `The add command downloads, adds, and enables a new tfvet ruleset.
+	Short: "Retrieves and enables a new ruleset",
+	Long: `The add command retrieves and enables a new tfvet ruleset.
 
 Supports a wide range of sources including github url, fileserver path, or even just
 the path to a local directory.
 
-See https://github.com/hashicorp/go-getter#url-format for more information on how to form input.
+See https://github.com/hashicorp/go-getter#url-format for more information on all supported input
+types.
 
 Arguments:
 
@@ -44,7 +45,8 @@ following rules:
   • Repository must contain a ruleset.hcl file containing name and version.
   • Repository must contain a rules folder with rules plugins built with tfvet sdk.
 
-For more information on tfvet ruleset repository requirements see: TODO(clintjedwards):
+For more information on tfvet ruleset repository requirements and structure see:
+github.com/clintjedwards/tfvet-ruleset-example
 `,
 	Example: `$ tfvet add github.com/example/tfvet-ruleset-aws
 $ tfvet add ~/tmp/tfvet-ruleset-example`,
@@ -52,50 +54,50 @@ $ tfvet add ~/tmp/tfvet-ruleset-example`,
 	RunE: runAdd,
 }
 
-// move a downloaded repo from the temporary path to the well known repo path for the ruleset.
-func (s *state) moveRepo(ruleset, tmpPath string) error {
-
-	s.fmt.PrintMsg("Moving ruleset to permanent config location")
-
+// moveRepo copies a downloaded repo from the temporary download path
+// to the well known repo path for the ruleset.
+func moveRepo(ruleset, tmpPath string) error {
 	err := utils.CreateDir(appcfg.RulesetPath(ruleset))
 	if err != nil {
-		errText := fmt.Sprintf("could not create parent directory: %v", err)
-		s.fmt.PrintFinalError(errText)
-		return errors.New(errText)
+		return fmt.Errorf("could not create parent directory: %w", err)
 	}
 
 	err = copy.Copy(tmpPath, appcfg.RepoPath(ruleset))
 	if err != nil {
-		errText := fmt.Sprintf("could not copy ruleset to config directory: %v", err)
-		s.fmt.PrintFinalError(errText)
-		return errors.New(errText)
+		return fmt.Errorf("could not copy ruleset to config directory: %w", err)
 	}
-
-	s.fmt.PrintSuccess("New ruleset added")
 
 	return nil
 }
 
-func generateHash(filename string) string {
+// generateHash takes a string and returns it's hashed result.
+// The hash used is non-cryptographic(because of speed) and as such it
+// should not be used for anything expecting to be secure.
+func generateHash(s string) string {
 	digest := fnv.New32()
-	_, _ = digest.Write([]byte(filename))
+	_, _ = digest.Write([]byte(s))
 	hash := hex.EncodeToString(digest.Sum(nil))
 	return fmt.Sprintf(hash[0:5])
 }
 
-//TODO(clintjedwards): Break down this function, it should not work this way
-// it needs to be a lot smaller
-func (s *state) getRuleInfo(ruleset, rule string) error {
+// getRulePluginClient returns the grpc plugin client, the rule plugin client, and a possible error.
+// the rule plugin client is used to communicate with the rule plugins and from this client you can
+// run commands that work just like regular methods against the plugins.
+//
+// YOU MUST call kill() on the returned plugin.Client object or it will cause memory leaks.
+//
+// TODO(clintjedwards): This by default just discards any logs from the client.
+// Change this to only do this above the loglevel debug.
+func getRulePluginClient(ruleset, ruleID string) (client *plugin.Client, rule tfvetPlugin.RuleDefinition, err error) {
+
 	tmpPluginName := "tfvetPlugin"
 
-	s.fmt.PrintMsg(fmt.Sprintf("Collecting rule info for: %s", rule))
-
-	client := plugin.NewClient(&plugin.ClientConfig{
+	client = plugin.NewClient(&plugin.ClientConfig{
 		HandshakeConfig: tfvetPlugin.Handshake,
 		Plugins: map[string]plugin.Plugin{
 			tmpPluginName: &tfvetPlugin.TfvetRulePlugin{},
 		},
-		Cmd: exec.Command(appcfg.RulePath(ruleset, rule)),
+		Cmd: exec.Command(appcfg.RulePath(ruleset, ruleID)),
 		Logger: hclog.New(&hclog.LoggerOptions{
 			Output: ioutil.Discard,
 			Level:  0,
@@ -104,51 +106,43 @@ func (s *state) getRuleInfo(ruleset, rule string) error {
 		Stderr:           nil,
 		AllowedProtocols: []plugin.Protocol{plugin.ProtocolGRPC},
 	})
-	defer client.Kill()
 
 	rpcClient, err := client.Client()
 	if err != nil {
-		errText := fmt.Sprintf("could not connect to rule plugin %s: %v", rule, err)
-		s.fmt.PrintFinalError(errText)
-		return errors.New(errText)
+		return nil, nil, fmt.Errorf("could not connect to rule plugin %s: %v", ruleID, err)
 	}
 
 	raw, err := rpcClient.Dispense(tmpPluginName)
 	if err != nil {
-		errText := fmt.Sprintf("could not connect to rule plugin %s: %v", rule, err)
-		s.fmt.PrintFinalError(errText)
-		return errors.New(errText)
+		return nil, nil, fmt.Errorf("could not connect to rule plugin %s: %v", ruleID, err)
 	}
 
 	plugin, ok := raw.(tfvetPlugin.RuleDefinition)
 	if !ok {
-		errText := fmt.Sprintf("could not convert rule plugin %s: %v", rule, err)
-		s.fmt.PrintFinalError(errText)
-		return errors.New(errText)
+		return nil, nil, fmt.Errorf("could not convert rule plugin %s: %v", ruleID, err)
 	}
+
+	return client, plugin, nil
+}
+
+// getRuleInfo retrieves information by calling the GetRuleInfo method on the rule plugin.
+func getRuleInfo(ruleset, ruleID string) (models.Rule, error) {
+	c, plugin, err := getRulePluginClient(ruleset, ruleID)
+	defer c.Kill()
 
 	response, err := plugin.GetRuleInfo(&proto.GetRuleInfoRequest{})
 	if err != nil {
-		errText := fmt.Sprintf("could not get rule info for %s: %v", rule, err)
-		s.fmt.PrintFinalError(errText)
-		return errors.New(errText)
+		return models.Rule{}, fmt.Errorf("could not get rule info for %s: %w", ruleID, err)
 	}
 
-	err = s.cfg.UpsertRule(ruleset, models.Rule{
-		ID:      rule,
+	return models.Rule{
+		ID:      ruleID,
 		Name:    response.RuleInfo.Name,
 		Short:   response.RuleInfo.Short,
 		Long:    response.RuleInfo.Long,
 		Link:    response.RuleInfo.Link,
 		Enabled: response.RuleInfo.Enabled,
-	})
-	if err != nil {
-		errText := fmt.Sprintf("could not add rule %s to config file: %v", rule, err)
-		s.fmt.PrintFinalError(errText)
-		return errors.New(errText)
-	}
-
-	return nil
+	}, nil
 }
 
 // buildRule builds the rule/plugin from srcPath and stores it in dstPath
@@ -183,12 +177,12 @@ func runAdd(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	state.fmt.PrintMsg("Retrieving config")
+	state.fmt.PrintMsg("Checking for duplicates")
 
 	// Check that repository does not yet exist
 	if state.cfg.RepositoryExists(repoLocation) {
-		errText := "repository already exists; use `tfvet ruleset delete` or" +
-			"`tfvet ruleset update` to manipulate already added rulesets"
+		errText := "repository already exists; use `tfvet ruleset update`" +
+			" to manipulate already added rulesets"
 		state.fmt.PrintFinalError(errText)
 		return errors.New(errText)
 	}
@@ -205,7 +199,7 @@ func runAdd(cmd *cobra.Command, args []string) error {
 	defer os.RemoveAll(tmpDownloadPath) // Remove tmp dir in case we end early
 	state.fmt.PrintSuccess(fmt.Sprintf("Retrieved %s", repoLocation))
 
-	// Retrieve repo into in hcl file
+	// Get the repository information from the repository itself.
 	info, err := getRemoteRulesetInfo(tmpDownloadPath)
 	if err != nil {
 		errText := fmt.Sprintf("could not get ruleset info: %v", err)
@@ -213,7 +207,7 @@ func runAdd(cmd *cobra.Command, args []string) error {
 		return errors.New(errText)
 	}
 
-	// Ruleset verification
+	// Verify that the repository has the correct elements.
 	state.fmt.PrintMsg("Verifying ruleset")
 	err = verifyRuleset(tmpDownloadPath, info)
 	if err != nil {
@@ -223,6 +217,7 @@ func runAdd(cmd *cobra.Command, args []string) error {
 	}
 	state.fmt.PrintSuccess("Verified ruleset")
 
+	// Add new ruleset to configuration file.
 	state.fmt.PrintMsg("Adding ruleset to config")
 	err = state.cfg.AddRuleset(models.Ruleset{
 		Name:       info.Name,
@@ -236,14 +231,18 @@ func runAdd(cmd *cobra.Command, args []string) error {
 		return errors.New(errText)
 	}
 
-	err = state.moveRepo(info.Name, tmpDownloadPath)
+	// Move downloaded ruleset repository to the permanent location within config.
+	state.fmt.PrintMsg("Moving ruleset to permanent config location")
+	err = moveRepo(info.Name, tmpDownloadPath)
 	if err != nil {
 		errText := fmt.Sprintf("could not move ruleset repository: %v", err)
 		state.fmt.PrintFinalError(errText)
 		return errors.New(errText)
 	}
+	state.fmt.PrintSuccess("New ruleset added")
 
-	err = buildRulesetRules(state, info.Name)
+	// Find all rules within the ruleset and build them using the go compiler.
+	err = buildAllRules(state, info.Name)
 	if err != nil {
 		errText := fmt.Sprintf("could not build ruleset rules: %v", err)
 		state.fmt.PrintFinalError(errText)
