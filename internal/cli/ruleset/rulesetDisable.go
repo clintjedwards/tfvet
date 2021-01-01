@@ -28,8 +28,6 @@ func runDisable(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	state.fmt.PrintMsg(ruleset)
-
 	err = state.cfg.SetRulesetEnabled(ruleset, false)
 	if err != nil {
 		state.fmt.PrintFinalError(fmt.Sprintf("could not disable ruleset: %v", err))
