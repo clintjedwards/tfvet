@@ -9,7 +9,6 @@ import (
 	"github.com/clintjedwards/tfvet/internal/cli/models"
 	"github.com/clintjedwards/tfvet/internal/plugin/proto"
 	"github.com/olekukonko/tablewriter"
-	"github.com/rs/zerolog/log"
 )
 
 // LintErrorDetails is a harness for all the details that go into a lint error
@@ -43,7 +42,8 @@ x Error: lolwut is inherently unsafe; see link for more details
   • remediation: `some code to fix the issue`
 */
 func (f *Formatter) PrintLintError(details LintErrorDetails) {
-	if f.mode == Pretty {
+	switch f.mode {
+	case Pretty:
 		// First notify the user of an error and print the short error description.
 		f.PrintError(fmt.Sprintf("Error[%s]", details.Rule.ID), strings.ToLower(details.Rule.Short))
 		// Next print the filename along with the starting line and column
@@ -58,26 +58,27 @@ func (f *Formatter) PrintLintError(details LintErrorDetails) {
 			fmt.Sprintf("For more information about this error, try `tfvet rule describe %s %s`.",
 				details.Ruleset, details.Rule.ID))
 		f.PrintStandaloneMsg("\n")
-		return
+	case JSON:
+		metadata, _ := json.Marshal(details.LintErr.Metadata)
+
+		f.json.log.Error().
+			Str("type", "linterror").
+			Str("id", details.Rule.ID).
+			Str("name", details.Rule.Name).
+			Str("short", details.Rule.Short).
+			Str("link", details.Rule.Link).
+			Str("line", details.Line).
+			RawJSON("metadata", metadata).
+			Str("suggestion", details.LintErr.Suggestion).
+			Str("remediation", details.LintErr.Remediation).
+			Int("start_line", int(details.LintErr.Location.Start.Line)).
+			Int("start_col", int(details.LintErr.Location.Start.Column)).
+			Int("end_line", int(details.LintErr.Location.End.Line)).
+			Int("end_col", int(details.LintErr.Location.End.Column)).
+			Msg("")
+	case Plain:
+		f.plain.print(details)
 	}
-
-	metadata, _ := json.Marshal(details.LintErr.Metadata)
-
-	log.Error().
-		Str("type", "linterror").
-		Str("id", details.Rule.ID).
-		Str("name", details.Rule.Name).
-		Str("short", details.Rule.Short).
-		Str("link", details.Rule.Link).
-		Str("line", details.Line).
-		RawJSON("metadata", metadata).
-		Str("suggestion", details.LintErr.Suggestion).
-		Str("remediation", details.LintErr.Remediation).
-		Int("start_line", int(details.LintErr.Location.Start.Line)).
-		Int("start_col", int(details.LintErr.Location.Start.Column)).
-		Int("end_line", int(details.LintErr.Location.End.Line)).
-		Int("end_col", int(details.LintErr.Location.End.Column)).
-		Msg("")
 }
 
 // formatLineTable returns a pretty printed string of an error line

@@ -10,7 +10,7 @@ import (
 var cmdRulesetDisable = &cobra.Command{
 	Use:   "disable <ruleset>",
 	Short: "Turns off a ruleset",
-	Long:  `Turns off a particular ruleset, skipping it when linting is run.`,
+	Long:  `Turns off a particular ruleset, causing it to be skipped on all future linting runs.`,
 	Args:  cobra.ExactArgs(1),
 	RunE:  runDisable,
 }

@@ -3,11 +3,7 @@ package ruleset
 import (
 	"fmt"
 	"log"
-	"strconv"
-	"strings"
 
-	"github.com/clintjedwards/tfvet/internal/cli/models"
-	"github.com/olekukonko/tablewriter"
 	"github.com/spf13/cobra"
 )
 
@@ -35,7 +31,7 @@ func runList(cmd *cobra.Command, args []string) error {
 	}
 
 	if len(args) == 0 {
-		state.fmt.PrintStandaloneMsg(formatAllRulesets(state.cfg.Rulesets))
+		state.fmt.PrintAllRulesets(state.cfg.Rulesets)
 		return nil
 	}
 
@@ -45,91 +41,8 @@ func runList(cmd *cobra.Command, args []string) error {
 		state.fmt.PrintFinalError(fmt.Sprintf("could not find ruleset %s", rulesetName))
 		return err
 	}
-	state.fmt.PrintStandaloneMsg(formatRuleset(ruleset))
+	state.fmt.PrintRuleset(ruleset)
 	return nil
-}
-
-func formatAllRulesets(rulesets []models.Ruleset) string {
-	headers := []string{"Name", "Version", "Repository", "Enabled", "Rules"}
-	data := [][]string{}
-
-	for _, ruleset := range rulesets {
-		data = append(data, []string{
-			ruleset.Name,
-			ruleset.Version,
-			ruleset.Repository,
-			strconv.FormatBool(ruleset.Enabled),
-			strconv.Itoa(len(ruleset.Rules)),
-		})
-	}
-
-	tableString := &strings.Builder{}
-	table := tablewriter.NewWriter(tableString)
-
-	table.SetAutoFormatHeaders(false)
-	table.SetAutoWrapText(false)
-	table.SetAlignment(tablewriter.ALIGN_LEFT)
-	table.SetHeaderAlignment(tablewriter.ALIGN_LEFT)
-	table.SetCenterSeparator("")
-	table.SetColumnSeparator("")
-	table.SetRowSeparator("")
-	table.SetBorder(false)
-	table.SetRowSeparator("-")
-	table.SetHeaderLine(true)
-	table.SetTablePadding("\t")
-	table.SetNoWhiteSpace(true)
-	table.SetHeader(headers)
-	table.AppendBulk(data)
-
-	table.Render()
-	return tableString.String()
-}
-
-func formatRuleset(ruleset models.Ruleset) string {
-
-	enabledStr := ""
-	if ruleset.Enabled {
-		enabledStr = "enabled"
-	} else {
-		enabledStr = "disabled"
-	}
-
-	// example v1.0.0 :: 2 rule(s) :: enabled
-	title := fmt.Sprintf("Ruleset: %s %s :: %d rule(s) :: %s\n\n",
-		ruleset.Name, ruleset.Version, len(ruleset.Rules), enabledStr)
-
-	headers := []string{"Rule", "Name", "Description", "Enabled"}
-	data := [][]string{}
-
-	for _, rule := range ruleset.Rules {
-		data = append(data, []string{
-			rule.ID,
-			rule.Name,
-			rule.Short,
-			strconv.FormatBool(rule.Enabled),
-		})
-	}
-
-	tableString := &strings.Builder{}
-	tableString.WriteString(title)
-	table := tablewriter.NewWriter(tableString)
-
-	table.SetAutoFormatHeaders(false)
-	table.SetAutoWrapText(true)
-	table.SetAlignment(tablewriter.ALIGN_LEFT)
-	table.SetHeaderAlignment(tablewriter.ALIGN_LEFT)
-	table.SetCenterSeparator("")
-	table.SetColumnSeparator("")
-	table.SetRowSeparator("-")
-	table.SetHeaderLine(true)
-	table.SetBorder(false)
-	table.SetTablePadding("\t")
-	table.SetNoWhiteSpace(true)
-	table.SetHeader(headers)
-	table.AppendBulk(data)
-
-	table.Render()
-	return tableString.String()
 }
 
 func init() {
