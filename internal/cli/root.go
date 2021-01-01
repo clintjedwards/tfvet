@@ -1,8 +1,12 @@
 package cli
 
 import (
+	"fmt"
 	"log"
 	"os"
+	"strconv"
+	"strings"
+	"time"
 
 	"github.com/clintjedwards/tfvet/internal/cli/appcfg"
 	"github.com/clintjedwards/tfvet/internal/cli/rule"
@@ -28,10 +32,11 @@ var RootCmd = &cobra.Command{
 		err := setup()
 		return err
 	},
-	Version: appVersion,
+	Version: " ", // We leave this added but empty so that the rootcmd will supply the -v flag
 }
 
 func init() {
+	RootCmd.SetVersionTemplate(humanizeVersion(appVersion))
 	RootCmd.AddCommand(ruleset.CmdRuleset)
 	RootCmd.AddCommand(rule.CmdRule)
 
@@ -42,6 +47,19 @@ func init() {
 // Execute adds all child commands to the root command and sets flags appropriately.
 func Execute() error {
 	return RootCmd.Execute()
+}
+
+func humanizeVersion(version string) string {
+
+	splitVersion := strings.Split(version, "_")
+
+	semver := splitVersion[0]
+	hash := splitVersion[1]
+	i, _ := strconv.ParseInt(splitVersion[2], 10, 64)
+	unixTime := time.Unix(i, 0)
+	time := unixTime.Format("Mon Jan 2 15:04 2006")
+
+	return fmt.Sprintf("tfvet %s [%s] %s\n", semver, hash, time)
 }
 
 func setup() error {
