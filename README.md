@@ -5,8 +5,10 @@ Terraform vet is a simplistic, pluggable terraform linter.
 [![Go Report Card](https://goreportcard.com/badge/gojp/goreportcard)](https://goreportcard.com/report/github.com/clintjedwards/tfvet)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](https://github.com/clintjedwards/tfvet/blob/main/LICENSE)
 
+[View Demo (Asciinema)](https://asciinema.org/a/Hij9QgWIFs909RxWXJLHPycmo)
+
 <details>
-<summary>View Demo</summary>
+<summary>View Demo (Inline GIF)</summary>
 
 ![Demo](demo.gif)
 
