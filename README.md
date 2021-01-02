@@ -17,7 +17,7 @@ Terraform vet is a simplistic, pluggable terraform linter.
 ## Features
 
 - Pluggable and configurable rules.
-- Write rules in golang, using simple data structures.
+- Write simple, testable rules in golang, using simple data structures.
 - Simple, intuitive command line interface.
 
 ## Install
@@ -56,9 +56,9 @@ adding a path or multiple paths. The path argument allows for file globbing:
 Rules are grouped into packaging called rulesets. These rulesets can be added and removed from your local
 tfvet linter as you see fit.
 
-You can find an [example ruleset here.](https://github.com/clintjedwards/tfvet-ruleset-example)
-
 Find [how to create a new ruleset here.](sdk/README.md)
+
+You can find an [example ruleset here.](https://github.com/clintjedwards/tfvet-ruleset-example)
 
 ## Application structure
 

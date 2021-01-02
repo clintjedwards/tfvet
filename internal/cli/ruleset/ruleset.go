@@ -12,6 +12,8 @@ import (
 	"github.com/Masterminds/semver"
 	"github.com/clintjedwards/tfvet/internal/cli/appcfg"
 	"github.com/clintjedwards/tfvet/internal/cli/formatter"
+	validation "github.com/go-ozzo/ozzo-validation"
+	"github.com/go-ozzo/ozzo-validation/is"
 	getter "github.com/hashicorp/go-getter/v2"
 	"github.com/hashicorp/hcl/v2/hclsimple"
 	"github.com/spf13/cobra"
@@ -176,11 +178,17 @@ func buildAllRules(s *state, ruleset string) error {
 //	* Makes sure the ruleset has a proper version and name.
 //	* Makes sure the ruleset has a rules folder.
 func verifyRuleset(path string, info rulesetInfo) error {
-	if len(info.Name) < 3 {
-		return errors.New("ruleset name cannot be less than 3 characters")
+
+	err := validation.Validate(info.Name,
+		validation.Required,      // not empty
+		validation.Length(3, 20), // within length reqs
+		is.Alphanumeric,          // is alphanumeric
+	)
+	if err != nil {
+		return fmt.Errorf("ruleset name malformed: %w", err)
 	}
 
-	_, err := semver.NewVersion(info.Version)
+	_, err = semver.NewVersion(info.Version)
 	if err != nil {
 		return fmt.Errorf("ruleset version text malformed; should be in semvar notation: %v", err)
 	}

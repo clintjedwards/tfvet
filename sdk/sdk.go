@@ -6,6 +6,8 @@ import (
 	tfvetPlugin "github.com/clintjedwards/tfvet/internal/plugin"
 	proto "github.com/clintjedwards/tfvet/internal/plugin/proto"
 	"github.com/hashicorp/go-plugin"
+	"github.com/hashicorp/hcl/v2/hclparse"
+	"github.com/hashicorp/hcl/v2/hclsyntax"
 )
 
 // Check provides an interface for the user to define their own check/lint method.
@@ -21,11 +23,20 @@ type Check interface {
 // This just combines the rule with the check interface.
 // This should be kept in lockstep with the Rule model from the tfvet package.
 type Rule struct {
-	Name    string
-	Short   string
-	Long    string
-	Link    string
+	// The name of the rule, it should be short and to the point of what the rule is for.
+	Name string
+	// A short description about the rule. This should be one line at most and will be shown
+	// to the user when the rule finds errors.
+	Short string
+	// A longer description about the rule. This can be looked up by the user via command line.
+	Long string
+	// A link that pertains to the rule; usually additional documentation.
+	Link string
+	// Enabled controls whether the rule will be enabled by default on addition of a ruleset.
+	// If enabled is set to false, the user will have to manually turn on the rule.
 	Enabled bool
+	// Check is function which runs when the rule is called. This should contain the logic around
+	// what the rule is checking.
 	Check
 }
 
@@ -43,9 +54,12 @@ type Range struct {
 
 // RuleError represents a single lint error's details
 type RuleError struct {
-	Suggestion  string
+	// Suggestion is a short text description on how to fix the error.
+	Suggestion string
+	// Remediation is a short snippet of code that can be used to fix the error.
 	Remediation string
-	Location    Range
+	// The location of the error in the file.
+	Location Range
 	// metadata is a key value store that allows the rule to include extra data,
 	// that can be used by any tooling consuming said rule. For example "severity"
 	// might be something included in metadata.
@@ -74,6 +88,16 @@ func (rule *Rule) ExecuteRule(request *proto.ExecuteRuleRequest) (*proto.Execute
 	return &proto.ExecuteRuleResponse{
 		Errors: ruleErrorsToProto(ruleErrors),
 	}, err
+}
+
+// ParseHCL parses the HCL file content and returns a simple data structure representing the file.
+func ParseHCL(content []byte) *hclsyntax.Body {
+	//TODO(clintjedwards): Having to reparse the file for every plugin is very slow, figure
+	// out if there is a better way to transfer this information to the main binary and have
+	// plugins consume that instead.
+	parser := hclparse.NewParser()
+	file, _ := parser.ParseHCL(content, "tmp")
+	return file.Body.(*hclsyntax.Body)
 }
 
 func ruleErrorsToProto(ruleErrors []RuleError) []*proto.RuleError {

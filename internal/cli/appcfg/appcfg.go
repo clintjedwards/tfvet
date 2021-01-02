@@ -6,6 +6,7 @@ import (
 	"errors"
 	"io/ioutil"
 	"os"
+	"strings"
 
 	"github.com/clintjedwards/tfvet/internal/cli/models"
 	"github.com/hashicorp/hcl/v2/gohcl"
@@ -67,6 +68,9 @@ func (appcfg *Appcfg) AddRuleset(rs models.Ruleset) error {
 		return errors.New("ruleset already exists")
 	}
 
+	// cast ruleset name to lower
+	rs.Name = strings.ToLower(rs.Name)
+
 	appcfg.Rulesets = append(appcfg.Rulesets, rs)
 	err := appcfg.writeConfig()
 	if err != nil {
@@ -82,6 +86,9 @@ func (appcfg *Appcfg) UpdateRuleset(rs models.Ruleset) error {
 		if ruleset.Name != rs.Name {
 			continue
 		}
+
+		// cast ruleset name to lower
+		rs.Name = strings.ToLower(rs.Name)
 
 		appcfg.Rulesets[index] = rs
 		err := appcfg.writeConfig()
