@@ -2,13 +2,24 @@ package rule
 
 import "github.com/spf13/cobra"
 
-// CmdCreate creates a skeleton ruleset
-var CmdCreate = &cobra.Command{
-	Use:   "generate",
-	Short: "Manage linting rulesets",
-	Long: `Manage linting rulesets.
+// cmdRuleCreate creates a skeleton ruleset
+var cmdRuleCreate = &cobra.Command{
+	Use:   "create <name>",
+	Short: "Create a new rule",
+	Long: `Creates the files and folders needed to create a new rule.
 
-Rulesets are a grouping of rules that are used to lint documents.
+Navigate to the ruleset folder in which you mean to create the rule. From there, simply run this command
+to create all files and folders required for a tfvet rule.
+`,
+	Example: `$ tfvet rule create example_rule`,
+	RunE:    runCreate,
+	Args:    cobra.ExactArgs(1),
+}
 
-The ruleset subcommand allows you to retrieve, remove, and otherwise manipulate particular rulesets.`,
+func init() {
+	CmdRule.AddCommand(cmdRuleCreate)
+}
+
+func runCreate(cmd *cobra.Command, args []string) error {
+	return nil
 }

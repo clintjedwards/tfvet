@@ -42,6 +42,7 @@ type Rule struct {
 
 // Position represents location within a document.
 type Position struct {
+	// These are uint32 because that is what the protobuf requires
 	Line   uint32
 	Column uint32
 }
@@ -91,6 +92,8 @@ func (rule *Rule) ExecuteRule(request *proto.ExecuteRuleRequest) (*proto.Execute
 }
 
 // ParseHCL parses the HCL file content and returns a simple data structure representing the file.
+// It's safe to ignore the error from ParseHCL as it should have already been handled by the main
+// process.
 func ParseHCL(content []byte) *hclsyntax.Body {
 	//TODO(clintjedwards): Having to reparse the file for every plugin is very slow, figure
 	// out if there is a better way to transfer this information to the main binary and have
