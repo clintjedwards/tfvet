@@ -28,3 +28,4 @@
 - Generator for new rules, rulesets and other things a user might have to do by hand.
 - Formatter's printerror should take an error and expand it into a string, so that we can pass around
   errors not strings.
+- Add timeouts for potentially long actions like downloads
