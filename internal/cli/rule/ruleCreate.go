@@ -1,6 +1,17 @@
 package rule
 
-import "github.com/spf13/cobra"
+import (
+	"fmt"
+	"html/template"
+	"log"
+	"os"
+	"strings"
+
+	"github.com/clintjedwards/tfvet/internal/utils"
+	validation "github.com/go-ozzo/ozzo-validation"
+	"github.com/go-ozzo/ozzo-validation/is"
+	"github.com/spf13/cobra"
+)
 
 // cmdRuleCreate creates a skeleton ruleset
 var cmdRuleCreate = &cobra.Command{
@@ -10,8 +21,11 @@ var cmdRuleCreate = &cobra.Command{
 
 Navigate to the ruleset folder in which you mean to create the rule. From there, simply run this command
 to create all files and folders required for a tfvet rule.
+
+The rule name should short, alphanumeric, and have no spaces. It will be used as the directory name
+and hashed to provide the user a quick way to target said specific rule.
 `,
-	Example: `$ tfvet rule create example_rule`,
+	Example: `$ tfvet rule create example_rule_name`,
 	RunE:    runCreate,
 	Args:    cobra.ExactArgs(1),
 }
@@ -21,5 +35,161 @@ func init() {
 }
 
 func runCreate(cmd *cobra.Command, args []string) error {
+	name := strings.ToLower(args[0])
+
+	err := validateName(name)
+	if err != nil {
+		log.Println(err)
+		return err
+	}
+
+	err = createRuleDir(name)
+	if err != nil {
+		log.Println(err)
+		return err
+	}
+
+	return nil
+}
+
+func validateName(name string) error {
+	err := validation.Validate(name,
+		validation.Required,      // not empty
+		validation.Length(3, 70), // within length reqs
+		is.ASCII,
+	)
+	if err != nil {
+		return fmt.Errorf("rule name malformed: %w", err)
+	}
+
+	return nil
+}
+
+func createRuleDir(name string) error {
+	currentDir, err := os.Getwd()
+	if err != nil {
+		return err
+	}
+
+	//TODO(clintjedwards): Take this from the appcfg package and stop declaring it everywhere
+	rulesDirName := "rules"
+	ruleDirPath := fmt.Sprintf("%s/%s/%s", currentDir, rulesDirName, name)
+
+	err = utils.CreateDir(ruleDirPath)
+	if err != nil {
+		return err
+	}
+
+	err = createMainFile(name)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func createMainFile(name string) error {
+	const mainFileContent = `package main
+
+import tfvet "github.com/clintjedwards/tfvet/sdk"
+
+// Check is constructed so that we can fulfill the interface for the NewRule function below.
+type Check struct{}
+
+// Check is the logic of the linting rule. Consume the hclContent object and produce lint errors
+// as your linting rule sees fit.
+func (c *Check) Check(content []byte) ([]tfvet.RuleError, error) {
+	// We declare lintErrors here so that we can append to it as we find errors within the file.
+	var lintErrors []tfvet.RuleError
+
+	// ParseHCL gives us back a simplified datastructure of the file which we can use to grep
+	// through and find linting errors.
+	hclContent := tfvet.ParseHCL(content)
+
+	// This is where the actual linting logic is applied. Everytime we find an error we add
+	// it to the errors list with its location.
+	for _, block := range hclContent.Blocks {
+		for _, label := range block.Labels {
+
+			// <linting logic belongs here>
+
+			// Once we find an error we log its location
+			location := tfvet.Range{
+				Start: tfvet.Position{
+					Line:   uint32(block.DefRange().Start.Line),
+					Column: uint32(block.DefRange().Start.Column),
+				},
+				End: tfvet.Position{
+					Line:   uint32(block.DefRange().End.Line),
+					Column: uint32(block.DefRange().End.Column),
+				},
+			}
+
+			// Every error we find we construct a "RuleError" struct and add it to our errors list.
+			lintErrors = append(lintErrors, tfvet.RuleError{
+				Suggestion:  "Use a different resource name than example",
+				Remediation: "resource \"google_compute_instance\" \"<new_name>\" {",
+				Location:    location,
+				Metadata: map[string]string{
+					"severity": "warning",
+					"example":  "Lorem ipsum dolor sit amet",
+				},
+			})
+		}
+	}
+
+	return lintErrors, nil
+}
+
+
+func main() {
+	// We instantiate an instance of our check interface we filled out above so we can register
+	// it into the rule below.
+	newCheck := Check{}
+
+	// Here we can fill out more information about the rule, it's purpose, and where to find more
+	// documentation.
+	// The documentation for each of these fields can be found looking at the sdk documentation
+	// here: https://pkg.go.dev/github.com/clintjedwards/tfvet/sdk#Rule
+	newRule := &tfvet.Rule{
+		Name:  "{{.Name}}",
+		Short: "<Short description on what this rule is for, shown to user whenever rule finds an error>",
+		Long: "<A longer description about what this rule is for. This is used as documentation.>",
+		Enabled: true,
+		Link:    "<This should be a hyperlink to additional documentation>",
+		Check:   &newCheck,
+	}
+
+	// Lastly we add our new rule so that it is properly registered.
+	tfvet.NewRule(newRule)
+}
+`
+
+	currentDir, err := os.Getwd()
+	if err != nil {
+		return err
+	}
+
+	const mainFileName = "main.go"
+	const rulesDirName = "rules"
+	ruleDirPath := fmt.Sprintf("%s/%s/%s", currentDir, rulesDirName, name)
+	mainFilePath := fmt.Sprintf("%s/%s", ruleDirPath, mainFileName)
+
+	file, err := os.Create(mainFilePath)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	tmpl := template.Must(template.New("").Parse(mainFileContent))
+	err = tmpl.Execute(file, struct {
+		Name string
+	}{
+		Name: name,
+	})
+	if err != nil {
+		return err
+	}
+
 	return nil
 }

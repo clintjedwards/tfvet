@@ -34,15 +34,16 @@ Within it you will find two attributes: `version` and `name`.
 
 Rules are written in Golang and kept in the `rules` folder found in the root of a ruleset directory.
 
-Within this folder, each rule is just a miniature golang program. Each one is kept in a folder on its own.
+Within this folder, each rule is just a miniature golang program and kept in a folder on its own.
+The directory name of the rule determines which ID it gets mapped to within TFvet.
 
-You can run the `tfvet rule create <name>` command to create a new rule from the root of the ruleset directory.
+You can run the `tfvet rule create <rule_name>` command to create a new rule from the root of the ruleset directory.
 
 ### 2) Customizing your new rule
 
-Created rules are just simple (testable) golang programs with only a few parts that you need to implement. These parts
-are highlighted and explained with comments in the main.go file within the rule directory upon using
-the generator to create a new rule.
+Created rules are just simple, testable golang programs with only a few pieces that you need to
+finish implementing. These parts are highlighted and explained with comments in the
+main.go file within the rule directory upon using the generator to create a new rule.
 
 #### **The Check function**
 
