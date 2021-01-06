@@ -62,7 +62,7 @@ func (f *Formatter) PrintLintError(details LintErrorDetails) {
 		metadata, _ := json.Marshal(details.LintErr.Metadata)
 
 		f.json.log.Error().
-			Str("type", "linterror").
+			Str("kind", "linterror").
 			Str("id", details.Rule.ID).
 			Str("name", details.Rule.Name).
 			Str("short", details.Rule.Short).
