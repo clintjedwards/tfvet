@@ -68,6 +68,7 @@ func (f *Formatter) PrintLintError(details LintErrorDetails) {
 			Str("short", details.Rule.Short).
 			Str("link", details.Rule.Link).
 			Str("line", details.Line).
+			Str("filepath", details.Filepath).
 			RawJSON("metadata", metadata).
 			Str("suggestion", details.LintErr.Suggestion).
 			Str("remediation", details.LintErr.Remediation).
