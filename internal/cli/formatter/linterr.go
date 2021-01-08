@@ -62,20 +62,20 @@ func (f *Formatter) PrintLintError(details LintErrorDetails) {
 		metadata, _ := json.Marshal(details.LintErr.Metadata)
 
 		f.json.log.Error().
-			Str("kind", "linterror").
-			Str("id", details.Rule.ID).
-			Str("name", details.Rule.Name).
-			Str("short", details.Rule.Short).
-			Str("link", details.Rule.Link).
-			Str("line", details.Line).
-			Str("filepath", details.Filepath).
-			RawJSON("metadata", metadata).
-			Str("suggestion", details.LintErr.Suggestion).
-			Str("remediation", details.LintErr.Remediation).
-			Int("start_line", int(details.LintErr.Location.Start.Line)).
-			Int("start_col", int(details.LintErr.Location.Start.Column)).
-			Int("end_line", int(details.LintErr.Location.End.Line)).
 			Int("end_col", int(details.LintErr.Location.End.Column)).
+			Int("end_line", int(details.LintErr.Location.End.Line)).
+			Int("start_col", int(details.LintErr.Location.Start.Column)).
+			Int("start_line", int(details.LintErr.Location.Start.Line)).
+			RawJSON("metadata", metadata).
+			Str("filepath", details.Filepath).
+			Str("id", details.Rule.ID).
+			Str("kind", "linterror").
+			Str("line", details.Line).
+			Str("link", details.Rule.Link).
+			Str("name", details.Rule.Name).
+			Str("remediation", details.LintErr.Remediation).
+			Str("short", details.Rule.Short).
+			Str("suggestion", details.LintErr.Suggestion).
 			Msg("")
 	case Plain:
 		f.plain.print(details)

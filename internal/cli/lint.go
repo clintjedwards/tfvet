@@ -167,15 +167,16 @@ func runLint(cmd *cobra.Command, args []string) error {
 			state.fmt.PrintStandaloneMsg("")
 			continue
 		}
-		defer file.Close()
 
 		err = state.lintFile(file)
 		if err != nil {
+			file.Close()
 			state.fmt.PrintError("Skipped file", fmt.Sprintf("%s; could not lint: %v", filepath.Base(file.Name()), err))
 			state.fmt.PrintStandaloneMsg("")
 			continue
 		}
 		numFiles++
+		file.Close()
 	}
 
 	duration := time.Since(startTime)

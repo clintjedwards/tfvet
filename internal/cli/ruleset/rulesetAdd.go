@@ -109,16 +109,19 @@ func getRulePluginClient(ruleset, ruleID string) (client *plugin.Client, rule tf
 
 	rpcClient, err := client.Client()
 	if err != nil {
+		client.Kill()
 		return nil, nil, fmt.Errorf("could not connect to rule plugin %s: %v", ruleID, err)
 	}
 
 	raw, err := rpcClient.Dispense(tmpPluginName)
 	if err != nil {
+		client.Kill()
 		return nil, nil, fmt.Errorf("could not connect to rule plugin %s: %v", ruleID, err)
 	}
 
 	plugin, ok := raw.(tfvetPlugin.RuleDefinition)
 	if !ok {
+		client.Kill()
 		return nil, nil, fmt.Errorf("could not convert rule plugin %s: %v", ruleID, err)
 	}
 
