@@ -22,6 +22,7 @@ import (
 	"github.com/hashicorp/go-plugin"
 	"github.com/hashicorp/hcl/v2/hclparse"
 	"github.com/mitchellh/go-homedir"
+	"github.com/shirou/gopsutil/v3/mem"
 	"github.com/spf13/cobra"
 )
 
@@ -191,8 +192,13 @@ func runLint(cmd *cobra.Command, args []string) error {
 
 // lintFile orchestrates the process of linting the given file.
 func (s *state) lintFile(file *os.File) error {
-	// TODO(clintjedwards): Replace with a function that doesn't suck the entire file into memory
-	// or make sure file isn't too large before we absorb it.
+
+	// Check we have enough memory to store file
+	err := checkAvailMemory(file)
+	if err != nil {
+		return err
+	}
+
 	contents, err := ioutil.ReadAll(file)
 	if err != nil {
 		return err
@@ -287,6 +293,25 @@ func (s *state) runRule(ruleset string, rule models.Rule, filepath string, rawHC
 			Rule:     rule,
 			LintErr:  lintError,
 		})
+	}
+
+	return nil
+}
+
+// checkAvailMemory compares the file size of a given file vs the available
+// memory of the OS. If the OS does not have enough memory to read the
+// file entirely this will return an error.
+func checkAvailMemory(file *os.File) error {
+
+	v, err := mem.VirtualMemory()
+	if err != nil {
+		return err
+	}
+
+	fileInfo, _ := file.Stat()
+	if v.Available < uint64(fileInfo.Size()) {
+		return fmt.Errorf("not enough available memory. avail: %d; file: %d",
+			v.Available, fileInfo.Size())
 	}
 
 	return nil

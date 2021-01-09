@@ -71,6 +71,10 @@ You can find an [example ruleset here.](https://github.com/clintjedwards/tfvet-r
   - **utils**: Common directory for piece of code used throughout.
 - **sdk**: The software development toolkit that assists with creating rulesets and rules.
 
+## Drawbacks
+
+- The lint rules are designed to only consume one file at a time, they cannot alert on project wide errors.
+
 ## Author
 
 - **Clint Edwards** - [Github](https://github.com/clintjedwards)
