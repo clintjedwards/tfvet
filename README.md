@@ -22,10 +22,15 @@ Terraform vet is a simplistic, pluggable terraform linter.
 
 - **Linux:** `wget https://github.com/clintjedwards/tfvet/releases/latest/download/tfvet`
 
+### Go Install:
+
+1. `git clone https://github.com/clintjedwards/tfvet && cd tfvet`
+2. `go install`
+
 ### Build manually:
 
-1. git clone https://github.com/clintjedwards/tfvet
-2. go build -o <your_path_here>
+1. `git clone https://github.com/clintjedwards/tfvet && cd tfvet`
+2. `go build -o <your_path_here>`
 
 ## How it works
 
