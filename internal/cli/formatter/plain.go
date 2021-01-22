@@ -21,7 +21,7 @@ func (pp *plainPrinter) print(obj interface{}) {
 	rawJSON, _ := json.Marshal(obj)
 
 	var tmp map[string]interface{}
-	json.Unmarshal(rawJSON, &tmp)
+	_ = json.Unmarshal(rawJSON, &tmp)
 
 	fmtter := colorjson.NewFormatter()
 	fmtter.Indent = 2

@@ -50,13 +50,12 @@ func Execute() error {
 }
 
 func humanizeVersion(version string) string {
-
 	splitVersion := strings.Split(version, "_")
 
 	semver := splitVersion[0]
 	hash := splitVersion[1]
-	i, _ := strconv.ParseInt(splitVersion[2], 10, 64)
-	unixTime := time.Unix(i, 0)
+	i, _ := strconv.Atoi(splitVersion[2])
+	unixTime := time.Unix(int64(i), 0)
 	time := unixTime.Format("Mon Jan 2 15:04 2006")
 
 	return fmt.Sprintf("tfvet %s [%s] %s\n", semver, hash, time)
