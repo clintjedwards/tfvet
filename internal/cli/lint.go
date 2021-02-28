@@ -229,10 +229,8 @@ func (s *state) lintFile(file *os.File) (int, error) {
 				continue
 			}
 
-			//<filename>::<ruleset>::<rule>
-			s.fmt.PrintMsg(fmt.Sprintf("%s::%s::%s",
-				filepath.Base(file.Name()), strings.ToLower(ruleset.Name), strings.ToLower(rule.Name)))
-			//time.Sleep(4 * time.Second) // DEBUG
+			s.fmt.PrintMsg(fmt.Sprintf("%q ruleset linting %q for rule %q",
+				strings.ToLower(ruleset.Name), filepath.Base(file.Name()), strings.ToLower(rule.Name)))
 
 			numErrors, err := s.runRule(ruleset.Name, rule, file.Name(), contents)
 			if err != nil {
