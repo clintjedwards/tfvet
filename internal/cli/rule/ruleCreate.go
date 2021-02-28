@@ -102,14 +102,25 @@ func (c *Check) Check(content []byte) ([]tfvet.RuleError, error) {
 	// We declare lintErrors here so that we can append to it as we find errors within the file.
 	var lintErrors []tfvet.RuleError
 
-	// ParseHCL gives us back a simplified datastructure of the file which we can use to grep
-	// through and find linting errors.
+	// All HCL files are comprised of two components: "blocks" and within those blocks, "attributes".
+	// The strategy for most rules is simply cycle through the blocks you're interested
+	// in and perform some logic to make sure its in the state you expect.
+	//
+	// ParseHCL gives us back our HCL file neatly parsed into a struct representing those
+	// nested blocks and attributes.
 	hclContent := tfvet.ParseHCL(content)
 
 	// This is where the actual linting logic is applied. Everytime we find an error we add
 	// it to the errors list with its location.
+	//
+	// The example below parses through labels to find the name for the correct terraform resource
+	// once it has found the correct resource it can perform some logic to make sure its in
+	// a certain state and then continue if it is or append a new lint error if it isn't.
+	//
+	// The below is just an example and many parts can/should be changed for your use case.
 	for _, block := range hclContent.Blocks {
 		for _, label := range block.Labels {
+
 
 			// <linting logic belongs here>
 

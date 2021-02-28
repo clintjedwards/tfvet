@@ -50,8 +50,7 @@ main.go file within the rule directory upon using the generator to create a new 
 The check function is where the logic for the lint rule is stored. It receives the file to be linted
 as an argument and then returns a list of linting errors pertaining to that file.
 
-The implementation of the linting logic should be simple as the sdk offers hcl file parsers that returns
-an easy to walk list of all blocks and attributes within the given file.
+The implementation of the linting logic should be simple as the sdk offers hcl file parsers that return an easy to walk list of all blocks and attributes within the given file.
 
 #### **The Main function**
 

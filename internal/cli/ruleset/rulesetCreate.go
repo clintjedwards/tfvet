@@ -58,7 +58,7 @@ func runCreate(cmd *cobra.Command, args []string) error {
 func createRulesetConfigFile(name string) error {
 	const rulesetFileContent = `// short (between 3 and 20 char) name for the ruleset
 name = "{{.Name}}"
-// bumping the version causes downstream client to detect that there has been an update.
+// bumping the version causes downstream clients to detect that there has been an update.
 version = "0.0.0"
 `
 

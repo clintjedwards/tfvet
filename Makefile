@@ -10,8 +10,9 @@ build-protos:
 	 --go-grpc_out=. --go-grpc_opt=paths=source_relative \
 	 internal/plugin/proto/*.proto
 
+build: export CGO_ENABLED=0
 build: check-path-included check-semver-included build-protos
-	GOOS=linux GOARCH=${GOARCH} CGO_ENABLED=0 go build -ldflags $(GO_LDFLAGS) -o $(path)
+	go build -ldflags $(GO_LDFLAGS) -o $(path)
 
 check-path-included:
 ifndef path
