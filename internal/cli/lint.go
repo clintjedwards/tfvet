@@ -159,31 +159,37 @@ func runLint(cmd *cobra.Command, args []string) error {
 	}
 
 	startTime := time.Now()
-	numFiles := 0
+	numFiles := 0   // how many files we've ran through
+	numErrors := 0  // how many errors we've found
+	numSkipped := 0 // how many files we've skipped
 
 	for _, file := range files {
 		file, err := os.Open(file)
 		if err != nil {
 			state.fmt.PrintError("Skipped file", fmt.Sprintf("%s; could not open: %v", filepath.Base(file.Name()), err))
 			state.fmt.PrintStandaloneMsg("")
+			numSkipped++
 			continue
 		}
 
-		err = state.lintFile(file)
+		errorsFound, err := state.lintFile(file)
 		if err != nil {
-			file.Close()
+			file.Close() // Close the file handle if we're not going to process it.
 			state.fmt.PrintError("Skipped file", fmt.Sprintf("%s; could not lint: %v", filepath.Base(file.Name()), err))
 			state.fmt.PrintStandaloneMsg("")
+			numSkipped++
 			continue
 		}
+		numErrors = numErrors + errorsFound
 		numFiles++
-		file.Close()
+		file.Close() // don't defer things that are in loops
 	}
 
 	duration := time.Since(startTime)
 	durationSeconds := float64(duration) / float64(time.Second)
 	timePerFile := float64(duration) / float64(numFiles)
 
+	state.fmt.PrintSuccess(fmt.Sprintf("Found %d error(s) and skipped %d file(s)", numErrors, numSkipped))
 	state.fmt.PrintFinalSuccess(fmt.Sprintf("Linted %d file(s) in %.2fs (avg %.2fms/file)",
 		numFiles, durationSeconds, timePerFile/float64(time.Millisecond)))
 
@@ -191,25 +197,26 @@ func runLint(cmd *cobra.Command, args []string) error {
 }
 
 // lintFile orchestrates the process of linting the given file.
-func (s *state) lintFile(file *os.File) error {
+func (s *state) lintFile(file *os.File) (int, error) {
 
 	// Check we have enough memory to store file
 	err := checkAvailMemory(file)
 	if err != nil {
-		return err
+		return 0, err
 	}
 
 	contents, err := ioutil.ReadAll(file)
 	if err != nil {
-		return err
+		return 0, err
 	}
 
 	_, diags := hclparse.NewParser().ParseHCL(contents, file.Name())
 	if diags.HasErrors() {
-		return diags
+		return 0, diags
 	}
 
 	rulesets := s.cfg.Rulesets
+	errorsFound := 0
 
 	// For each ruleset we need to run each one of the enabled rules against the given file.
 	for _, ruleset := range rulesets {
@@ -225,20 +232,24 @@ func (s *state) lintFile(file *os.File) error {
 			//<filename>::<ruleset>::<rule>
 			s.fmt.PrintMsg(fmt.Sprintf("%s::%s::%s",
 				filepath.Base(file.Name()), strings.ToLower(ruleset.Name), strings.ToLower(rule.Name)))
+			//time.Sleep(4 * time.Second) // DEBUG
 
-			err := s.runRule(ruleset.Name, rule, file.Name(), contents)
+			numErrors, err := s.runRule(ruleset.Name, rule, file.Name(), contents)
 			if err != nil {
 				s.fmt.PrintError("Rule failed", fmt.Sprintf("%s; encountered an error while running: %v",
 					rule.Name, err))
 				continue
 			}
+
+			errorsFound = errorsFound + numErrors
 		}
 	}
 
-	return nil
+	return errorsFound, nil
 }
 
-func (s *state) runRule(ruleset string, rule models.Rule, filepath string, rawHCLFile []byte) error {
+// runRule runs the rule plugin and returns the number of errors found.
+func (s *state) runRule(ruleset string, rule models.Rule, filepath string, rawHCLFile []byte) (int, error) {
 	tmpPluginName := "tfvetPlugin"
 
 	client := plugin.NewClient(&plugin.ClientConfig{
@@ -259,31 +270,31 @@ func (s *state) runRule(ruleset string, rule models.Rule, filepath string, rawHC
 
 	rpcClient, err := client.Client()
 	if err != nil {
-		return fmt.Errorf("could not create rpc client: %w", err)
+		return 0, fmt.Errorf("could not create rpc client: %w", err)
 	}
 
 	raw, err := rpcClient.Dispense(tmpPluginName)
 	if err != nil {
-		return fmt.Errorf("could not connect to rule plugin: %w", err)
+		return 0, fmt.Errorf("could not connect to rule plugin: %w", err)
 	}
 
 	plugin, ok := raw.(tfvetPlugin.RuleDefinition)
 	if !ok {
-		return fmt.Errorf("could not convert rule interface: %w", err)
+		return 0, fmt.Errorf("could not convert rule interface: %w", err)
 	}
 
 	response, err := plugin.ExecuteRule(&proto.ExecuteRuleRequest{
 		HclFile: rawHCLFile,
 	})
 	if err != nil {
-		return fmt.Errorf("could not execute linting rule: %w", err)
+		return 0, fmt.Errorf("could not execute linting rule: %w", err)
 	}
 
 	lintErrs := response.Errors
 	for _, lintError := range lintErrs {
 		line, _, err := utils.ReadLine(bytes.NewBuffer(rawHCLFile), int(lintError.Location.Start.Line))
 		if err != nil {
-			return fmt.Errorf("could not get line from file: %w", err)
+			return 0, fmt.Errorf("could not get line from file: %w", err)
 		}
 
 		s.fmt.PrintLintError(formatter.LintErrorDetails{
@@ -295,7 +306,7 @@ func (s *state) runRule(ruleset string, rule models.Rule, filepath string, rawHC
 		})
 	}
 
-	return nil
+	return len(lintErrs), nil
 }
 
 // checkAvailMemory compares the file size of a given file vs the available
