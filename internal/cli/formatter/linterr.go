@@ -74,6 +74,7 @@ func (f *Formatter) PrintLintError(details LintErrorDetails) {
 			Str("link", details.Rule.Link).
 			Str("name", details.Rule.Name).
 			Str("remediation", details.LintErr.Remediation).
+			Str("ruleset", details.Ruleset).
 			Str("short", details.Rule.Short).
 			Str("suggestion", details.LintErr.Suggestion).
 			Msg("")
