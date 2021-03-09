@@ -18,34 +18,44 @@ func (f *Formatter) PrintAllRulesets(rulesets []models.Ruleset) {
 	case JSON:
 		for _, ruleset := range rulesets {
 
-			// We don't want to print the rules yet just the ruleset info
-			// so we create a new object without the rules and then
-			// json marshal that instead.
-			strippedRuleset := models.Ruleset{
+			// Turn the ruleset full result into a quick summary
+			rulesetSummary := struct {
+				Name       string
+				Version    string
+				Repository string
+				Enabled    bool
+				Rules      int
+			}{
 				Name:       ruleset.Name,
 				Version:    ruleset.Version,
 				Repository: ruleset.Repository,
 				Enabled:    ruleset.Enabled,
+				Rules:      len(ruleset.Rules),
 			}
 
-			jsonRuleset, _ := json.Marshal(strippedRuleset)
+			jsonRuleset, _ := json.Marshal(rulesetSummary)
 
 			f.json.log.Info().RawJSON(ruleset.Name, jsonRuleset).Msg("")
 		}
 	case Plain:
 		for _, ruleset := range rulesets {
 
-			// We don't want to print the rules yet just the ruleset info
-			// so we create a new object without the rules and then
-			// json marshal that instead.
-			strippedRuleset := models.Ruleset{
+			// Turn the ruleset full result into a quick summary
+			rulesetSummary := struct {
+				Name       string
+				Version    string
+				Repository string
+				Enabled    bool
+				Rules      int
+			}{
 				Name:       ruleset.Name,
 				Version:    ruleset.Version,
 				Repository: ruleset.Repository,
 				Enabled:    ruleset.Enabled,
+				Rules:      len(ruleset.Rules),
 			}
 
-			f.plain.print(strippedRuleset)
+			f.plain.print(rulesetSummary)
 		}
 	}
 }

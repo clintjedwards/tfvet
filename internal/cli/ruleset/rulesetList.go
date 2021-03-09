@@ -31,7 +31,15 @@ func runList(cmd *cobra.Command, args []string) error {
 	}
 
 	if len(args) == 0 {
+		state.fmt.PrintStandaloneMsg("== Summary ==\n\n")
 		state.fmt.PrintAllRulesets(state.cfg.Rulesets)
+		state.fmt.PrintStandaloneMsg("\n== Rulesets ==\n\n")
+		for index, ruleset := range state.cfg.Rulesets {
+			state.fmt.PrintRuleset(ruleset)
+			if index != len(state.cfg.Rulesets)-1 {
+				state.fmt.PrintStandaloneMsg("\n\n")
+			}
+		}
 		return nil
 	}
 
