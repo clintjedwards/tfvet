@@ -166,8 +166,7 @@ func runLint(cmd *cobra.Command, args []string) error {
 	for _, file := range files {
 		file, err := os.Open(file)
 		if err != nil {
-			state.fmt.PrintError("Skipped file", fmt.Sprintf("%s; could not open: %v", filepath.Base(file.Name()), err))
-			state.fmt.PrintStandaloneMsg("")
+			state.fmt.PrintError("Skipped file", fmt.Sprintf("%s; could not open: %v\n", filepath.Base(file.Name()), err))
 			numSkipped++
 			continue
 		}
@@ -175,8 +174,7 @@ func runLint(cmd *cobra.Command, args []string) error {
 		errorsFound, err := state.lintFile(file)
 		if err != nil {
 			file.Close() // Close the file handle if we're not going to process it.
-			state.fmt.PrintError("Skipped file", fmt.Sprintf("%s; could not lint: %v", filepath.Base(file.Name()), err))
-			state.fmt.PrintStandaloneMsg("")
+			state.fmt.PrintError("Skipped file", fmt.Sprintf("%s; could not lint: %v\n", filepath.Base(file.Name()), err))
 			numSkipped++
 			continue
 		}

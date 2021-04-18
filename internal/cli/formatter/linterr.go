@@ -52,12 +52,10 @@ func (f *Formatter) PrintLintError(details LintErrorDetails) {
 		// Next pretty print the error line
 		f.PrintStandaloneMsg(formatLineTable(details.Line, int(details.LintErr.Location.Start.Line)))
 		f.PrintStandaloneMsg("  = additional information:\n")
-		f.PrintStandaloneMsg(formatAdditionalInfo(details))
-		f.PrintStandaloneMsg("\n")
+		f.PrintStandaloneMsg(formatAdditionalInfo(details) + "\n")
 		f.PrintStandaloneMsg(
-			fmt.Sprintf("For more information about this error, try `tfvet rule describe %s %s`.",
+			fmt.Sprintf("For more information about this error, try `tfvet rule describe %s %s`."+"\n\n",
 				details.Ruleset, details.Rule.ID))
-		f.PrintStandaloneMsg("\n")
 	case JSON:
 		metadata, _ := json.Marshal(details.LintErr.Metadata)
 

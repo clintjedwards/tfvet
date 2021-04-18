@@ -84,7 +84,7 @@ func (f *Formatter) PrintMsg(msg string) {
 	case Pretty:
 		f.pretty.spinner.Message(msg)
 	case JSON:
-		f.json.log.Info().Msg(msg)
+		f.json.log.Info().Msg(strings.TrimSpace(msg))
 	case Plain:
 		f.plain.printMsg(msg)
 	}
@@ -108,7 +108,7 @@ func (f *Formatter) PrintStandaloneMsg(msg string) {
 		f.pretty.newSpinner()
 	case JSON:
 		if msg != "" {
-			f.json.log.Info().Msg(msg)
+			f.json.log.Info().Msg(strings.TrimSpace(msg))
 		}
 	case Plain:
 		if msg != "" {
@@ -128,7 +128,7 @@ func (f *Formatter) PrintError(suffix, msg string) {
 		_ = f.pretty.spinner.StopFail()
 		f.pretty.newSpinner()
 	case JSON:
-		f.json.log.Error().Msg(msg)
+		f.json.log.Error().Msg(strings.TrimSpace(msg))
 	case Plain:
 		f.plain.printErr(msg)
 	}
@@ -143,7 +143,7 @@ func (f *Formatter) PrintFinalError(msg string) {
 		f.pretty.spinner.StopFailMessage(msg)
 		_ = f.pretty.spinner.StopFail()
 	case JSON:
-		f.json.log.Error().Msg(msg)
+		f.json.log.Error().Msg(strings.TrimSpace(msg))
 	case Plain:
 		f.plain.printErr(msg)
 	}
@@ -159,7 +159,7 @@ func (f *Formatter) PrintSuccess(msg string) {
 		_ = f.pretty.spinner.Stop()
 		f.pretty.newSpinner()
 	case JSON:
-		f.json.log.Info().Msg(msg)
+		f.json.log.Info().Msg(strings.TrimSpace(msg))
 	case Plain:
 		f.plain.printMsg(msg)
 	}
@@ -174,7 +174,7 @@ func (f *Formatter) PrintFinalSuccess(msg string) {
 		f.pretty.spinner.Suffix(fmt.Sprintf(" %s", msg))
 		_ = f.pretty.spinner.Stop()
 	case JSON:
-		f.json.log.Info().Msg(msg)
+		f.json.log.Info().Msg(strings.TrimSpace(msg))
 	case Plain:
 		f.plain.printMsg(msg)
 	}
@@ -186,7 +186,7 @@ func (f *Formatter) UpdateSuffix(text string) {
 	case Pretty:
 		f.pretty.spinner.Suffix(fmt.Sprintf(" %s", text))
 	case JSON:
-		f.json.log.Info().Msg(text)
+		f.json.log.Info().Msg(strings.TrimSpace(text))
 	case Plain:
 		f.plain.printMsg(text)
 	}

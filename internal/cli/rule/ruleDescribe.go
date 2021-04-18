@@ -48,12 +48,9 @@ func runDescribe(cmd *cobra.Command, args []string) error {
 	// work properly and are displayed properly in the terminal.
 	//
 	// Enabled: true | Link: https://google.com
-	state.fmt.PrintStandaloneMsg(fmt.Sprintf("[%s] %s", rule.ID, rule.Name))
-	state.fmt.PrintStandaloneMsg("")
-	state.fmt.PrintStandaloneMsg(rule.Short)
-	state.fmt.PrintStandaloneMsg("")
-	state.fmt.PrintStandaloneMsg(strings.TrimPrefix(rule.Long, "\n"))
-	state.fmt.PrintStandaloneMsg("")
+	state.fmt.PrintStandaloneMsg(fmt.Sprintf("[%s] %s\n\n", rule.ID, rule.Name))
+	state.fmt.PrintStandaloneMsg(rule.Short + "\n\n")
+	state.fmt.PrintStandaloneMsg(strings.TrimPrefix(rule.Long, "\n") + "\n")
 	state.fmt.PrintStandaloneMsg(fmt.Sprintf("Enabled: %s | Link: %s",
 		strconv.FormatBool(rule.Enabled), rule.Link))
 
