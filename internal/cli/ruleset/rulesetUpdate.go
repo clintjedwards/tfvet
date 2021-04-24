@@ -45,49 +45,54 @@ func runUpdate(cmd *cobra.Command, args []string) error {
 
 	if len(args) == 0 {
 		for _, ruleset := range state.cfg.Rulesets {
-			state.fmt.UpdateSuffix(fmt.Sprintf("Updating ruleset %s", ruleset.Name))
+			state.fmt.Print(fmt.Sprintf("Updating ruleset %s", ruleset.Name))
 			err := updateRuleset(state, ruleset)
 			if err != nil {
-				state.fmt.PrintFinalError(fmt.Sprintf("could not update ruleset %s", ruleset.Name))
+				state.fmt.PrintErr(fmt.Sprintf("could not update ruleset %s", ruleset.Name))
+				state.fmt.Finish()
 				return err
 			}
 		}
-		state.fmt.PrintFinalSuccess("Updated all rulesets")
+		state.fmt.PrintSuccess("Updated all rulesets")
+		state.fmt.Finish()
 		return nil
 	}
 
 	rulesetName := args[0]
-	state.fmt.UpdateSuffix(fmt.Sprintf("Updating ruleset %s", rulesetName))
+	state.fmt.Print(fmt.Sprintf("Updating ruleset %s", rulesetName))
 	ruleset, err := state.cfg.GetRuleset(rulesetName)
 	if err != nil {
-		state.fmt.PrintFinalError(fmt.Sprintf("could not find ruleset %s", rulesetName))
+		state.fmt.PrintErr(fmt.Sprintf("could not find ruleset %s", rulesetName))
+		state.fmt.Finish()
 		return err
 	}
 	err = updateRuleset(state, ruleset)
 	if err != nil {
-		state.fmt.PrintFinalError(fmt.Sprintf("could not update ruleset %s", ruleset.Name))
+		state.fmt.PrintErr(fmt.Sprintf("could not update ruleset %s", ruleset.Name))
+		state.fmt.Finish()
 		return err
 	}
-	state.fmt.PrintFinalSuccess("Updated all rulesets")
+	state.fmt.PrintSuccess("Updated all rulesets")
+	state.fmt.Finish()
 
 	return nil
 }
 
 func updateRuleset(s *state, ruleset models.Ruleset) error {
 
-	s.fmt.PrintMsg("Retrieveing ruleset")
+	s.fmt.Print("Retrieveing ruleset")
 	err := getRemoteRuleset(ruleset.Repository, appcfg.RepoPath(ruleset.Name))
 	if err != nil {
 		return err
 	}
 
-	s.fmt.PrintMsg("Parsing remote info")
+	s.fmt.Print("Parsing remote info")
 	info, err := getRemoteRulesetInfo(appcfg.RepoPath(ruleset.Name))
 	if err != nil {
 		return err
 	}
 
-	s.fmt.PrintMsg("Verifying ruleset")
+	s.fmt.Print("Verifying ruleset")
 	err = verifyRuleset(appcfg.RepoPath(ruleset.Name), info)
 	if err != nil {
 		return err
@@ -111,7 +116,7 @@ func updateRuleset(s *state, ruleset models.Ruleset) error {
 	s.fmt.PrintSuccess(fmt.Sprintf("Found newer ruleset for %s (current: %s, remote: %s)",
 		ruleset.Name, ruleset.Version, info.Version))
 
-	s.fmt.PrintMsg("Updating ruleset")
+	s.fmt.Print("Updating ruleset")
 	err = s.cfg.UpdateRuleset(models.Ruleset{
 		Name:       info.Name,
 		Version:    info.Version,

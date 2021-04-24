@@ -21,7 +21,7 @@ var appVersion = "0.0.dev_000000_33333"
 var RootCmd = &cobra.Command{
 	Use:   "tfvet",
 	Short: "tfvet is a Terraform linter",
-	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
+	PersistentPreRunE: func(cmd *cobra.Command, _ []string) error {
 		// Including these in the pre run hook instead of in the enclosing command definition
 		// allows cobra to still print errors and usage for its own cli verifications, but
 		// ignore our errors.
@@ -41,7 +41,7 @@ func init() {
 	RootCmd.AddCommand(rule.CmdRule)
 
 	RootCmd.PersistentFlags().StringP("format", "f", "pretty",
-		"output format; accepted values are 'pretty', 'json', and, 'plain'")
+		"output format; accepted values are 'pretty', 'json', 'silent'")
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.

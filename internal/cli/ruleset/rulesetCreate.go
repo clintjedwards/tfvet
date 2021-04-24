@@ -29,7 +29,7 @@ func init() {
 	CmdRuleset.AddCommand(cmdRulesetCreate)
 }
 
-func runCreate(cmd *cobra.Command, args []string) error {
+func runCreate(_ *cobra.Command, args []string) error {
 	name := strings.ToLower(args[0])
 
 	// Create ./ruleset.hcl

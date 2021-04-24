@@ -34,7 +34,7 @@ func init() {
 	CmdRule.AddCommand(cmdRuleCreate)
 }
 
-func runCreate(cmd *cobra.Command, args []string) error {
+func runCreate(_ *cobra.Command, args []string) error {
 	name := strings.ToLower(args[0])
 
 	err := validateName(name)

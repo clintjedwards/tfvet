@@ -30,11 +30,13 @@ func runDisable(cmd *cobra.Command, args []string) error {
 
 	err = state.cfg.SetRulesetEnabled(ruleset, false)
 	if err != nil {
-		state.fmt.PrintFinalError(fmt.Sprintf("could not disable ruleset: %v", err))
+		state.fmt.PrintErr(fmt.Sprintf("could not disable ruleset: %v", err))
+		state.fmt.Finish()
 		return err
 	}
 
-	state.fmt.PrintFinalSuccess(fmt.Sprintf("Disabled ruleset %s", ruleset))
+	state.fmt.PrintSuccess(fmt.Sprintf("Disabled ruleset %s", ruleset))
+	state.fmt.Finish()
 	return nil
 }
 

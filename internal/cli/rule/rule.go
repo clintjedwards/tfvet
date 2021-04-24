@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/clintjedwards/polyfmt"
 	"github.com/clintjedwards/tfvet/internal/cli/appcfg"
-	"github.com/clintjedwards/tfvet/internal/cli/formatter"
 	"github.com/spf13/cobra"
 )
 
@@ -23,23 +23,25 @@ The rule subcommand allows you to describe, enable, and otherwise manipulate par
 
 // state tracks application state over the time it takes a command to run.
 type state struct {
-	fmt *formatter.Formatter
+	fmt polyfmt.Formatter
 	cfg *appcfg.Appcfg
 }
 
 // newState returns a new initialized state object
 func newState(initialFmtMsg, format string) (*state, error) {
-
-	clifmt, err := formatter.New(initialFmtMsg, formatter.Mode(format))
+	clifmt, err := polyfmt.NewFormatter(polyfmt.Mode(format))
 	if err != nil {
 		log.Fatal(err)
 		return nil, err
 	}
 
+	clifmt.Print(initialFmtMsg, polyfmt.Pretty)
+
 	cfg, err := appcfg.GetConfig()
 	if err != nil {
 		errText := fmt.Sprintf("error reading config file %q: %v", appcfg.ConfigFilePath(), err)
-		clifmt.PrintFinalError(errText)
+		clifmt.PrintErr(errText)
+		clifmt.Finish()
 		return nil, errors.New(errText)
 	}
 

@@ -12,8 +12,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/clintjedwards/polyfmt"
 	"github.com/clintjedwards/tfvet/internal/cli/appcfg"
-	"github.com/clintjedwards/tfvet/internal/cli/formatter"
 	"github.com/clintjedwards/tfvet/internal/cli/models"
 	tfvetPlugin "github.com/clintjedwards/tfvet/internal/plugin"
 	"github.com/clintjedwards/tfvet/internal/plugin/proto"
@@ -44,21 +44,23 @@ $ tfvet line somefile.tf manyfilesfolder/*`,
 // state contains a bunch of useful state information for the add cli function. This is mostly
 // just for convenience.
 type state struct {
-	fmt *formatter.Formatter
+	fmt polyfmt.Formatter
 	cfg *appcfg.Appcfg
 }
 
 // newState returns a new state object with the fmt initialized
 func newState(initialFmtMsg, format string) (*state, error) {
-	clifmt, err := formatter.New(initialFmtMsg, formatter.Mode(format))
+	clifmt, err := polyfmt.NewFormatter(polyfmt.Mode(format))
 	if err != nil {
 		return nil, err
 	}
 
+	clifmt.Print(initialFmtMsg, polyfmt.Pretty)
+
 	cfg, err := appcfg.GetConfig()
 	if err != nil {
 		errText := fmt.Sprintf("error reading config file %q: %v", appcfg.ConfigFilePath(), err)
-		clifmt.PrintFinalError(errText)
+		clifmt.PrintErr(errText)
 		return nil, errors.New(errText)
 	}
 
@@ -76,12 +78,12 @@ func (s *state) getTerraformFiles(paths []string) ([]string, error) {
 	tfFiles := []string{}
 
 	for _, path := range paths {
-
 		// Resolve home directory
 		path, err := homedir.Expand(path)
 		if err != nil {
 			errText := fmt.Sprintf("could not parse path %s", path)
-			s.fmt.PrintFinalError(errText)
+			s.fmt.PrintErr(errText)
+			s.fmt.Finish()
 			return nil, errors.New(errText)
 		}
 
@@ -89,7 +91,8 @@ func (s *state) getTerraformFiles(paths []string) ([]string, error) {
 		path, err = filepath.Abs(path)
 		if err != nil {
 			errText := fmt.Sprintf("could not parse path %s", path)
-			s.fmt.PrintFinalError(errText)
+			s.fmt.PrintErr(errText)
+			s.fmt.Finish()
 			return nil, errors.New(errText)
 		}
 
@@ -97,7 +100,8 @@ func (s *state) getTerraformFiles(paths []string) ([]string, error) {
 		_, err = os.Stat(filepath.Dir(path))
 		if err != nil {
 			errText := fmt.Sprintf("could not open path: %v", err)
-			s.fmt.PrintFinalError(errText)
+			s.fmt.PrintErr(errText)
+			s.fmt.Finish()
 			return nil, errors.New(errText)
 		}
 
@@ -105,7 +109,8 @@ func (s *state) getTerraformFiles(paths []string) ([]string, error) {
 		globFiles, err := filepath.Glob(path)
 		if err != nil {
 			errText := fmt.Sprintf("could match on glob pattern %s", path)
-			s.fmt.PrintFinalError(errText)
+			s.fmt.PrintErr(errText)
+			s.fmt.Finish()
 			return nil, errors.New(errText)
 		}
 
@@ -120,7 +125,6 @@ func (s *state) getTerraformFiles(paths []string) ([]string, error) {
 }
 
 func runLint(cmd *cobra.Command, args []string) error {
-
 	format, err := cmd.Flags().GetString("format")
 	if err != nil {
 		log.Print(err)
@@ -154,7 +158,8 @@ func runLint(cmd *cobra.Command, args []string) error {
 	}
 
 	if len(files) == 0 {
-		state.fmt.PrintFinalError("No terraform files found")
+		state.fmt.PrintErr("No terraform files found")
+		state.fmt.Finish()
 		return errors.New("no terraform files found")
 	}
 
@@ -166,7 +171,12 @@ func runLint(cmd *cobra.Command, args []string) error {
 	for _, file := range files {
 		file, err := os.Open(file)
 		if err != nil {
-			state.fmt.PrintError("Skipped file", fmt.Sprintf("%s; could not open: %v\n", filepath.Base(file.Name()), err))
+			state.fmt.PrintErr(
+				fmt.Sprintf("Skipped file %s; could not open: %v\n", filepath.Base(file.Name()), err),
+				polyfmt.Pretty)
+			state.fmt.PrintErr(map[string]interface{}{
+				"skipped_file": fmt.Sprintf("Skipped file %s; could not open: %v\n", filepath.Base(file.Name()), err),
+			}, polyfmt.JSON)
 			numSkipped++
 			continue
 		}
@@ -174,7 +184,12 @@ func runLint(cmd *cobra.Command, args []string) error {
 		errorsFound, err := state.lintFile(file)
 		if err != nil {
 			file.Close() // Close the file handle if we're not going to process it.
-			state.fmt.PrintError("Skipped file", fmt.Sprintf("%s; could not lint: %v\n", filepath.Base(file.Name()), err))
+			state.fmt.PrintErr(
+				fmt.Sprintf("Skipped file %s; could not open: %v\n", filepath.Base(file.Name()), err),
+				polyfmt.Pretty)
+			state.fmt.PrintErr(map[string]interface{}{
+				"skipped_file": fmt.Sprintf("Skipped file %s; could not open: %v\n", filepath.Base(file.Name()), err),
+			}, polyfmt.JSON)
 			numSkipped++
 			continue
 		}
@@ -188,8 +203,9 @@ func runLint(cmd *cobra.Command, args []string) error {
 	timePerFile := float64(duration) / float64(numFiles)
 
 	state.fmt.PrintSuccess(fmt.Sprintf("Found %d error(s) and skipped %d file(s)", numErrors, numSkipped))
-	state.fmt.PrintFinalSuccess(fmt.Sprintf("Linted %d file(s) in %.2fs (avg %.2fms/file)",
+	state.fmt.PrintSuccess(fmt.Sprintf("Linted %d file(s) in %.2fs (avg %.2fms/file)",
 		numFiles, durationSeconds, timePerFile/float64(time.Millisecond)))
+	state.fmt.Finish()
 
 	return nil
 }
@@ -227,12 +243,12 @@ func (s *state) lintFile(file *os.File) (int, error) {
 				continue
 			}
 
-			s.fmt.PrintMsg(fmt.Sprintf("%q ruleset linting %q for rule %q",
+			s.fmt.Print(fmt.Sprintf("%q ruleset linting %q for rule %q",
 				strings.ToLower(ruleset.Name), filepath.Base(file.Name()), strings.ToLower(rule.Name)))
 
 			numErrors, err := s.runRule(ruleset.Name, rule, file.Name(), contents)
 			if err != nil {
-				s.fmt.PrintError("Rule failed", fmt.Sprintf("%s; encountered an error while running: %v",
+				s.fmt.PrintErr(fmt.Sprintf("Rule failed %s; encountered an error while running: %v",
 					rule.Name, err))
 				continue
 			}
@@ -293,13 +309,25 @@ func (s *state) runRule(ruleset string, rule models.Rule, filepath string, rawHC
 			return 0, fmt.Errorf("could not get line from file: %w", err)
 		}
 
-		s.fmt.PrintLintError(formatter.LintErrorDetails{
+		s.fmt.PrintErr(formatLintError(LintErrorDetails{
 			Filepath: filepath,
 			Line:     line,
 			Ruleset:  ruleset,
 			Rule:     rule,
 			LintErr:  lintError,
-		})
+		})+"\n", polyfmt.Pretty)
+
+		s.fmt.PrintErr(struct {
+			LintDetails LintErrorDetails `json:"lint_details"`
+		}{
+			LintDetails: LintErrorDetails{
+				Filepath: filepath,
+				Line:     line,
+				Ruleset:  ruleset,
+				Rule:     rule,
+				LintErr:  lintError,
+			},
+		}, polyfmt.JSON)
 	}
 
 	return len(lintErrs), nil

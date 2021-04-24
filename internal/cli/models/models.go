@@ -5,19 +5,19 @@ package models
 
 // Ruleset represents a packaged set of rules that govern what tfvet checks for.
 type Ruleset struct {
-	Name       string `hcl:"name,label"`
-	Version    string `hcl:"version"`
-	Repository string `hcl:"repository"`
-	Enabled    bool   `hcl:"enabled"`
-	Rules      []Rule `hcl:"rule,block"`
+	Name       string `hcl:"name,label" json:"name"`
+	Version    string `hcl:"version" json:"version"`
+	Repository string `hcl:"repository" json:"repository"`
+	Enabled    bool   `hcl:"enabled" json:"enabled"`
+	Rules      []Rule `hcl:"rule,block" json:"rules"`
 }
 
 // Rule represents a single lint check within a ruleset.
 type Rule struct {
-	ID      string `hcl:"id,label"`
-	Name    string `hcl:"name"`
-	Short   string `hcl:"short"`
-	Long    string `hcl:"long"`
-	Link    string `hcl:"link"`
-	Enabled bool   `hcl:"enabled"`
+	ID      string `hcl:"id,label" json:"id"`
+	Name    string `hcl:"name" json:"name"`
+	Short   string `hcl:"short" json:"short"`
+	Long    string `hcl:"long" json:"long"`
+	Link    string `hcl:"link" json:"link"`
+	Enabled bool   `hcl:"enabled" json:"enabled"`
 }

@@ -1,11 +1,13 @@
 package rule
 
 import (
+	"bytes"
 	"fmt"
+	"html/template"
 	"log"
-	"strconv"
 	"strings"
 
+	"github.com/clintjedwards/polyfmt"
 	"github.com/spf13/cobra"
 )
 
@@ -33,26 +35,38 @@ func runDescribe(cmd *cobra.Command, args []string) error {
 
 	rule, err := state.cfg.GetRule(ruleset, ruleID)
 	if err != nil {
-		state.fmt.PrintFinalError(fmt.Sprintf("could not describe rule %v", err))
+		state.fmt.PrintErr(fmt.Sprintf("could not describe rule %v", err))
+		state.fmt.Finish()
 		return err
 	}
 
-	// Example of output
-	//
-	// 	[d2d21] No resource with the name 'example'
-	//
-	// Example is a poor name for a resource and might lead to naming collisions.
-	//
-	// This is simply a test description of a resource that effectively alerts on nothingness.
-	// In turn this is essentially a really long description so we can test that our descriptions
-	// work properly and are displayed properly in the terminal.
-	//
-	// Enabled: true | Link: https://google.com
-	state.fmt.PrintStandaloneMsg(fmt.Sprintf("[%s] %s\n\n", rule.ID, rule.Name))
-	state.fmt.PrintStandaloneMsg(rule.Short + "\n\n")
-	state.fmt.PrintStandaloneMsg(strings.TrimPrefix(rule.Long, "\n") + "\n")
-	state.fmt.PrintStandaloneMsg(fmt.Sprintf("Enabled: %s | Link: %s",
-		strconv.FormatBool(rule.Enabled), rule.Link))
+	const describeTmpl = `[{{.ID}}] {{.Name}}
+
+{{.Short}}
+
+{{.Long}}
+Enabled: {{.Enabled}} | Link: {{.Link}}`
+
+	var tpl bytes.Buffer
+	t := template.Must(template.New("tmp").Parse(describeTmpl))
+	_ = t.Execute(&tpl, struct {
+		ID      string
+		Name    string
+		Short   string
+		Long    string
+		Enabled bool
+		Link    string
+	}{
+		ID:      rule.ID,
+		Name:    rule.Name,
+		Short:   rule.Short,
+		Long:    strings.TrimPrefix(rule.Long, "\n"),
+		Enabled: rule.Enabled,
+		Link:    rule.Link,
+	})
+
+	state.fmt.Println(tpl.String(), polyfmt.Pretty)
+	state.fmt.Println(rule, polyfmt.JSON)
 
 	return nil
 }

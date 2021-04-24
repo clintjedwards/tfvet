@@ -10,8 +10,8 @@ import (
 	"time"
 
 	"github.com/Masterminds/semver"
+	"github.com/clintjedwards/polyfmt"
 	"github.com/clintjedwards/tfvet/internal/cli/appcfg"
-	"github.com/clintjedwards/tfvet/internal/cli/formatter"
 	validation "github.com/go-ozzo/ozzo-validation"
 	"github.com/go-ozzo/ozzo-validation/is"
 	getter "github.com/hashicorp/go-getter/v2"
@@ -32,7 +32,7 @@ The ruleset subcommand allows you to retrieve, remove, and otherwise manipulate 
 
 // state tracks application state over the time it takes a command to run.
 type state struct {
-	fmt *formatter.Formatter
+	fmt polyfmt.Formatter
 	cfg *appcfg.Appcfg
 }
 
@@ -44,17 +44,18 @@ type rulesetInfo struct {
 
 // newState returns a new initialized state object
 func newState(initialFmtMsg, format string) (*state, error) {
-
-	clifmt, err := formatter.New(initialFmtMsg, formatter.Mode(format))
+	clifmt, err := polyfmt.NewFormatter(polyfmt.Mode(format))
 	if err != nil {
 		log.Fatal(err)
 		return nil, err
 	}
+	clifmt.Print(initialFmtMsg, polyfmt.Pretty)
 
 	cfg, err := appcfg.GetConfig()
 	if err != nil {
 		errText := fmt.Sprintf("error reading config file %q: %v", appcfg.ConfigFilePath(), err)
-		clifmt.PrintFinalError(errText)
+		clifmt.PrintErr(errText)
+		clifmt.Finish()
 		return nil, errors.New(errText)
 	}
 
@@ -93,12 +94,13 @@ func getRemoteRulesetInfo(repoPath string) (rulesetInfo, error) {
 // buildAllRules builds the plugins(rules are plugins) and places the binary
 // underneath the correct ruleset directory.
 func buildAllRules(s *state, ruleset string) error {
-	s.fmt.PrintMsg("Opening rules directory")
+	s.fmt.Print("Opening rules directory")
 
 	file, err := os.Open(appcfg.RepoRulesPath(ruleset))
 	if err != nil {
 		errText := fmt.Sprintf("could not open rules folder: %v", err)
-		s.fmt.PrintFinalError(errText)
+		s.fmt.PrintErr(errText)
+		s.fmt.Finish()
 		return errors.New(errText)
 	}
 	defer file.Close()
@@ -107,7 +109,8 @@ func buildAllRules(s *state, ruleset string) error {
 	fileList, err := file.Readdir(0)
 	if err != nil {
 		errText := fmt.Sprintf("could not read rules folder: %v", err)
-		s.fmt.PrintFinalError(errText)
+		s.fmt.PrintErr(errText)
+		s.fmt.Finish()
 		return errors.New(errText)
 	}
 
@@ -125,7 +128,7 @@ func buildAllRules(s *state, ruleset string) error {
 		// Sometimes file.Name will return the full path based on what is passed to file.Open.
 		dirName := filepath.Base(file.Name())
 
-		s.fmt.PrintMsg(fmt.Sprintf("Compiling %s", dirName))
+		s.fmt.Print(fmt.Sprintf("Compiling %s", dirName))
 
 		rawRulePath := fmt.Sprintf("%s/%s", appcfg.RepoRulesPath(ruleset), dirName)
 
@@ -143,22 +146,25 @@ func buildAllRules(s *state, ruleset string) error {
 		_, err := buildRule(rawRulePath, appcfg.RulePath(ruleset, ruleID))
 		if err != nil {
 			errText := fmt.Sprintf("could not build rule %s: %v", dirName, err)
-			s.fmt.PrintFinalError(errText)
+			s.fmt.PrintErr(errText)
+			s.fmt.Finish()
 			return errors.New(errText)
 		}
 
-		s.fmt.PrintMsg(fmt.Sprintf("Collecting rule info for: %s", dirName))
+		s.fmt.Print(fmt.Sprintf("Collecting rule info for: %s", dirName))
 		newRule, err := getRuleInfo(ruleset, ruleID)
 		if err != nil {
 			errText := fmt.Sprintf("could not build rule %s: %v", dirName, err)
-			s.fmt.PrintFinalError(errText)
+			s.fmt.PrintErr(errText)
+			s.fmt.Finish()
 			return errors.New(errText)
 		}
 
 		err = s.cfg.UpsertRule(ruleset, newRule)
 		if err != nil {
 			errText := fmt.Sprintf("could not upsert rule %s to config file: %v", dirName, err)
-			s.fmt.PrintFinalError(errText)
+			s.fmt.PrintErr(errText)
+			s.fmt.Finish()
 			return errors.New(errText)
 		}
 		count++

@@ -183,23 +183,25 @@ func runAdd(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	state.fmt.PrintMsg("Checking for duplicates")
+	state.fmt.Print("Checking for duplicates")
 
 	// Check that repository does not yet exist
 	if state.cfg.RepositoryExists(repoLocation) {
 		errText := "repository already exists; use `tfvet ruleset update`" +
 			" to manipulate already added rulesets"
-		state.fmt.PrintFinalError(errText)
+		state.fmt.PrintErr(errText)
+		state.fmt.Finish()
 		return errors.New(errText)
 	}
 
 	// Download remote repository
-	state.fmt.PrintMsg(fmt.Sprintf("Retrieving %s", repoLocation))
+	state.fmt.Print(fmt.Sprintf("Retrieving %s", repoLocation))
 	tmpDownloadPath := fmt.Sprintf("%s/tfvet_%s", os.TempDir(), generateHash(repoLocation))
 	err = getRemoteRuleset(repoLocation, tmpDownloadPath)
 	if err != nil {
 		errText := fmt.Sprintf("could not download ruleset: %v", err)
-		state.fmt.PrintFinalError(errText)
+		state.fmt.PrintErr(errText)
+		state.fmt.Finish()
 		return errors.New(errText)
 	}
 	defer os.RemoveAll(tmpDownloadPath) // Remove tmp dir in case we end early
@@ -209,22 +211,24 @@ func runAdd(cmd *cobra.Command, args []string) error {
 	info, err := getRemoteRulesetInfo(tmpDownloadPath)
 	if err != nil {
 		errText := fmt.Sprintf("could not get ruleset info: %v", err)
-		state.fmt.PrintFinalError(errText)
+		state.fmt.PrintErr(errText)
+		state.fmt.Finish()
 		return errors.New(errText)
 	}
 
 	// Verify that the repository has the correct elements.
-	state.fmt.PrintMsg("Verifying ruleset")
+	state.fmt.Print("Verifying ruleset")
 	err = verifyRuleset(tmpDownloadPath, info)
 	if err != nil {
 		errText := fmt.Sprintf("could not verify ruleset: %v", err)
-		state.fmt.PrintFinalError(errText)
+		state.fmt.PrintErr(errText)
+		state.fmt.Finish()
 		return errors.New(errText)
 	}
 	state.fmt.PrintSuccess("Verified ruleset")
 
 	// Add new ruleset to configuration file.
-	state.fmt.PrintMsg("Adding ruleset to config")
+	state.fmt.Print("Adding ruleset to config")
 	err = state.cfg.AddRuleset(models.Ruleset{
 		Name:       info.Name,
 		Version:    info.Version,
@@ -233,16 +237,18 @@ func runAdd(cmd *cobra.Command, args []string) error {
 	})
 	if err != nil {
 		errText := fmt.Sprintf("could not add ruleset: %v", err)
-		state.fmt.PrintFinalError(errText)
+		state.fmt.PrintErr(errText)
+		state.fmt.Finish()
 		return errors.New(errText)
 	}
 
 	// Move downloaded ruleset repository to the permanent location within config.
-	state.fmt.PrintMsg("Moving ruleset to permanent config location")
+	state.fmt.Print("Moving ruleset to permanent config location")
 	err = moveRepo(info.Name, tmpDownloadPath)
 	if err != nil {
 		errText := fmt.Sprintf("could not move ruleset repository: %v", err)
-		state.fmt.PrintFinalError(errText)
+		state.fmt.PrintErr(errText)
+		state.fmt.Finish()
 		return errors.New(errText)
 	}
 	state.fmt.PrintSuccess("New ruleset added")
@@ -251,11 +257,13 @@ func runAdd(cmd *cobra.Command, args []string) error {
 	err = buildAllRules(state, info.Name)
 	if err != nil {
 		errText := fmt.Sprintf("could not build ruleset rules: %v", err)
-		state.fmt.PrintFinalError(errText)
+		state.fmt.PrintErr(errText)
+		state.fmt.Finish()
 		return errors.New(errText)
 	}
 
-	state.fmt.PrintFinalSuccess(fmt.Sprintf("Successfully added ruleset: %s v%s", info.Name, info.Version))
+	state.fmt.PrintSuccess(fmt.Sprintf("Successfully added ruleset: %s v%s", info.Name, info.Version))
+	state.fmt.Finish()
 	return nil
 }
 
