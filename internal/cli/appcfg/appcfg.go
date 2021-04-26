@@ -154,12 +154,12 @@ func (appcfg *Appcfg) UpsertRule(rulesetName string, newRule models.Rule) error 
 // SetRulesetEnabled changes the enabled attribute on a ruleset.
 // Returns an error if the ruleset isn't found.
 func (appcfg *Appcfg) SetRulesetEnabled(name string, enabled bool) error {
-	for _, ruleset := range appcfg.Rulesets {
+	for index, ruleset := range appcfg.Rulesets {
 		if ruleset.Name != name {
 			continue
 		}
 
-		ruleset.Enabled = enabled
+		appcfg.Rulesets[index].Enabled = enabled
 		err := appcfg.writeConfig()
 		if err != nil {
 			return err
