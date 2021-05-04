@@ -302,33 +302,33 @@ func (s *state) runRule(ruleset string, rule models.Rule, filepath string, rawHC
 		return 0, fmt.Errorf("could not execute linting rule: %w", err)
 	}
 
-	lintErrs := response.Errors
-	for _, lintError := range lintErrs {
-		line, _, err := utils.ReadLine(bytes.NewBuffer(rawHCLFile), int(lintError.Location.Start.Line))
+	ruleErrs := response.Errors
+	for _, ruleError := range ruleErrs {
+		line, _, err := utils.ReadLine(bytes.NewBuffer(rawHCLFile), int(ruleError.Location.Start.Line))
 		if err != nil {
 			return 0, fmt.Errorf("could not get line from file: %w", err)
 		}
 
-		s.fmt.PrintErr(formatLintError(models.LintErrorDetails{
+		s.fmt.PrintErr(formatLintError(models.LintError{
 			Filepath: filepath,
 			Line:     line,
 			Ruleset:  ruleset,
 			Rule:     rule,
-			LintErr:  lintError,
+			RuleErr:  ruleError,
 		})+"\n", polyfmt.Pretty)
 
-		s.fmt.PrintErr(models.LintErrorDetailsWrapper{
-			LintDetails: models.LintErrorDetails{
+		s.fmt.PrintErr(models.LintErrorWrapper{
+			LintError: models.LintError{
 				Filepath: filepath,
 				Line:     line,
 				Ruleset:  ruleset,
 				Rule:     rule,
-				LintErr:  lintError,
+				RuleErr:  ruleError,
 			},
 		}, polyfmt.JSON)
 	}
 
-	return len(lintErrs), nil
+	return len(ruleErrs), nil
 }
 
 // checkAvailMemory compares the file size of a given file vs the available

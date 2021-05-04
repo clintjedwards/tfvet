@@ -1,6 +1,5 @@
-// Package models represents data structure which are shared between packages.
-// Changes made here will regenerate the protobuf definitions and maybe require an version
-// bump for the sdk.
+// package sdk is a convenience package enabling the easy downstream development around tfvet.
+// It provides the primitives to allow for ruleset/rule creation and structs to help in parsing tfvet output.
 package sdk
 
 import proto "github.com/clintjedwards/tfvet/internal/plugin/proto"
@@ -73,17 +72,18 @@ type RuleError struct {
 	Metadata map[string]string `json:"metadata"`
 }
 
-// LintErrorDetailsWrapper is a convenience struct so that json output is easier to programmatically read.
-// Nesting the output of LintError allows parsers to quickly and easily check if a particular error is a lint error.
-type LintErrorDetailsWrapper struct {
-	LintDetails LintErrorDetails `json:"lint_details"`
+// LintErrorWrapper is a convenience struct so that json output is easier to programmatically read.
+// Nesting the output of LintError allows parsers to quickly and easily check if a particular error in tfvet
+// output is a lint error and therefore should be processed differently.
+type LintErrorWrapper struct {
+	LintError LintError `json:"lint_error"`
 }
 
-// LintErrorDetails is a harness for all the details that go into a lint error
-type LintErrorDetails struct {
+// LintError is a harness for all the details that go into a lint error
+type LintError struct {
 	Filepath string           `json:"filepath"`
 	Line     string           `json:"line"`
-	LintErr  *proto.RuleError `json:"lint_error"`
+	RuleErr  *proto.RuleError `json:"rule_error"`
 	Rule     Rule             `json:"rule"`
 	Ruleset  string           `json:"ruleset"`
 }

@@ -15,7 +15,7 @@ import (
 //
 // It borrows(blatantly copies) from rust style errors:
 // https://doc.rust-lang.org/edition-guide/rust-2018/the-compiler/improved-error-messages.html
-func formatLintError(details models.LintErrorDetails) string {
+func formatLintError(lintErr models.LintError) string {
 	const lintErrorTmpl = `Error[{{.ID}}]: {{.Short}}
   --> {{.Filepath}}:{{.StartLine}}:{{.StartColumn}}
 {{.LineText}}
@@ -35,14 +35,14 @@ For more information about this error, try running ` + "`tfvet rule describe {{.
 		Metadata    string
 		Ruleset     string
 	}{
-		ID:          details.Rule.ID,
-		Short:       details.Rule.Short,
-		Filepath:    details.Filepath,
-		StartLine:   int(details.LintErr.Location.Start.Line),
-		StartColumn: int(details.LintErr.Location.Start.Column),
-		LineText:    formatLineTable(details.Line, int(details.LintErr.Location.Start.Line)),
-		Metadata:    formatAdditionalInfo(details),
-		Ruleset:     details.Ruleset,
+		ID:          lintErr.Rule.ID,
+		Short:       lintErr.Rule.Short,
+		Filepath:    lintErr.Filepath,
+		StartLine:   int(lintErr.RuleErr.Location.Start.Line),
+		StartColumn: int(lintErr.RuleErr.Location.Start.Column),
+		LineText:    formatLineTable(lintErr.Line, int(lintErr.RuleErr.Location.Start.Line)),
+		Metadata:    formatAdditionalInfo(lintErr),
+		Ruleset:     lintErr.Ruleset,
 	})
 
 	return tpl.String()
@@ -77,22 +77,22 @@ func formatLineTable(line string, lineNum int) string {
 	return tableString.String()
 }
 
-func formatAdditionalInfo(details models.LintErrorDetails) string {
+func formatAdditionalInfo(lintErr models.LintError) string {
 	data := [][]string{
-		{" ", "• name:", details.Rule.Name},
-		{" ", "• link:", details.Rule.Link},
+		{" ", "• name:", lintErr.Rule.Name},
+		{" ", "• link:", lintErr.Rule.Link},
 	}
 
-	if details.LintErr.Suggestion != "" {
-		data = append(data, []string{" ", "• suggestion:", details.LintErr.Suggestion})
+	if lintErr.RuleErr.Suggestion != "" {
+		data = append(data, []string{" ", "• suggestion:", lintErr.RuleErr.Suggestion})
 	}
-	if details.LintErr.Remediation != "" {
+	if lintErr.RuleErr.Remediation != "" {
 		data = append(data,
-			[]string{" ", "• remediation:", fmt.Sprintf("`%s`", details.LintErr.Remediation)})
+			[]string{" ", "• remediation:", fmt.Sprintf("`%s`", lintErr.RuleErr.Remediation)})
 	}
 
-	if len(details.LintErr.Metadata) != 0 {
-		for key, value := range details.LintErr.Metadata {
+	if len(lintErr.RuleErr.Metadata) != 0 {
+		for key, value := range lintErr.RuleErr.Metadata {
 			data = append(data,
 				[]string{" ", fmt.Sprintf("• %s:", key), value},
 			)
