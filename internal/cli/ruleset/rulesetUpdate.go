@@ -6,7 +6,7 @@ import (
 
 	"github.com/Masterminds/semver"
 	"github.com/clintjedwards/tfvet/internal/cli/appcfg"
-	"github.com/clintjedwards/tfvet/internal/cli/models"
+	models "github.com/clintjedwards/tfvet/sdk"
 	"github.com/spf13/cobra"
 )
 

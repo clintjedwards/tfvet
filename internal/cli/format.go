@@ -7,25 +7,15 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/clintjedwards/tfvet/internal/cli/models"
-	"github.com/clintjedwards/tfvet/internal/plugin/proto"
+	models "github.com/clintjedwards/tfvet/sdk"
 	"github.com/olekukonko/tablewriter"
 )
-
-// LintErrorDetails is a harness for all the details that go into a lint error
-type LintErrorDetails struct {
-	Filepath string           `json:"filepath"`
-	Line     string           `json:"line"`
-	LintErr  *proto.RuleError `json:"lint_error"`
-	Rule     models.Rule      `json:"rule"`
-	Ruleset  string           `json:"ruleset"`
-}
 
 // PrintLintError formats and prints details from a lint error.
 //
 // It borrows(blatantly copies) from rust style errors:
 // https://doc.rust-lang.org/edition-guide/rust-2018/the-compiler/improved-error-messages.html
-func formatLintError(details LintErrorDetails) string {
+func formatLintError(details models.LintErrorDetails) string {
 	const lintErrorTmpl = `Error[{{.ID}}]: {{.Short}}
   --> {{.Filepath}}:{{.StartLine}}:{{.StartColumn}}
 {{.LineText}}
@@ -87,7 +77,7 @@ func formatLineTable(line string, lineNum int) string {
 	return tableString.String()
 }
 
-func formatAdditionalInfo(details LintErrorDetails) string {
+func formatAdditionalInfo(details models.LintErrorDetails) string {
 	data := [][]string{
 		{" ", "• name:", details.Rule.Name},
 		{" ", "• link:", details.Rule.Link},

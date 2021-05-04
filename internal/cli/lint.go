@@ -14,10 +14,10 @@ import (
 
 	"github.com/clintjedwards/polyfmt"
 	"github.com/clintjedwards/tfvet/internal/cli/appcfg"
-	"github.com/clintjedwards/tfvet/internal/cli/models"
 	tfvetPlugin "github.com/clintjedwards/tfvet/internal/plugin"
 	"github.com/clintjedwards/tfvet/internal/plugin/proto"
 	"github.com/clintjedwards/tfvet/internal/utils"
+	models "github.com/clintjedwards/tfvet/sdk"
 	"github.com/hashicorp/go-hclog"
 	"github.com/hashicorp/go-plugin"
 	"github.com/hashicorp/hcl/v2/hclparse"
@@ -309,7 +309,7 @@ func (s *state) runRule(ruleset string, rule models.Rule, filepath string, rawHC
 			return 0, fmt.Errorf("could not get line from file: %w", err)
 		}
 
-		s.fmt.PrintErr(formatLintError(LintErrorDetails{
+		s.fmt.PrintErr(formatLintError(models.LintErrorDetails{
 			Filepath: filepath,
 			Line:     line,
 			Ruleset:  ruleset,
@@ -317,10 +317,8 @@ func (s *state) runRule(ruleset string, rule models.Rule, filepath string, rawHC
 			LintErr:  lintError,
 		})+"\n", polyfmt.Pretty)
 
-		s.fmt.PrintErr(struct {
-			LintDetails LintErrorDetails `json:"lint_details"`
-		}{
-			LintDetails: LintErrorDetails{
+		s.fmt.PrintErr(models.LintErrorDetailsWrapper{
+			LintDetails: models.LintErrorDetails{
 				Filepath: filepath,
 				Line:     line,
 				Ruleset:  ruleset,

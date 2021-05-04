@@ -12,10 +12,10 @@ import (
 	"hash/fnv"
 
 	"github.com/clintjedwards/tfvet/internal/cli/appcfg"
-	"github.com/clintjedwards/tfvet/internal/cli/models"
 	tfvetPlugin "github.com/clintjedwards/tfvet/internal/plugin"
 	"github.com/clintjedwards/tfvet/internal/plugin/proto"
 	"github.com/clintjedwards/tfvet/internal/utils"
+	models "github.com/clintjedwards/tfvet/sdk"
 	"github.com/hashicorp/go-hclog"
 	"github.com/hashicorp/go-plugin"
 	"github.com/otiai10/copy"

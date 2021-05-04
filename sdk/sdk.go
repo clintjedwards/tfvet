@@ -10,63 +10,6 @@ import (
 	"github.com/hashicorp/hcl/v2/hclsyntax"
 )
 
-// Check provides an interface for the user to define their own check/lint method.
-// This is the core of the pluggable interface pattern and allows the user to simply consume
-// the hcl file and return linting errors.
-//
-// content is the full hclfile in byte format.
-type Check interface {
-	Check(content []byte) ([]RuleError, error)
-}
-
-// Rule is the representation of a single rule within tfvet.
-// This just combines the rule with the check interface.
-// This should be kept in lockstep with the Rule model from the tfvet package.
-type Rule struct {
-	// The name of the rule, it should be short and to the point of what the rule is for.
-	Name string
-	// A short description about the rule. This should be one line at most and will be shown
-	// to the user when the rule finds errors.
-	Short string
-	// A longer description about the rule. This can be looked up by the user via command line.
-	Long string
-	// A link that pertains to the rule; usually additional documentation.
-	Link string
-	// Enabled controls whether the rule will be enabled by default on addition of a ruleset.
-	// If enabled is set to false, the user will have to manually turn on the rule.
-	Enabled bool
-	// Check is function which runs when the rule is called. This should contain the logic around
-	// what the rule is checking.
-	Check
-}
-
-// Position represents location within a document.
-type Position struct {
-	// These are uint32 because that is what the protobuf requires
-	Line   uint32
-	Column uint32
-}
-
-// Range represents the starting and ending points on a specific line within a document.
-type Range struct {
-	Start Position
-	End   Position
-}
-
-// RuleError represents a single lint error's details
-type RuleError struct {
-	// Suggestion is a short text description on how to fix the error.
-	Suggestion string
-	// Remediation is a short snippet of code that can be used to fix the error.
-	Remediation string
-	// The location of the error in the file.
-	Location Range
-	// metadata is a key value store that allows the rule to include extra data,
-	// that can be used by any tooling consuming said rule. For example "severity"
-	// might be something included in metadata.
-	Metadata map[string]string
-}
-
 // GetRuleInfo returns information about the rule itself.
 func (rule *Rule) GetRuleInfo(request *proto.GetRuleInfoRequest) (*proto.GetRuleInfoResponse, error) {
 	ruleInfo := proto.GetRuleInfoResponse{
