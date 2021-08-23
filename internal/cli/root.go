@@ -8,10 +8,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/clintjedwards/tfvet/internal/cli/appcfg"
-	"github.com/clintjedwards/tfvet/internal/cli/rule"
-	"github.com/clintjedwards/tfvet/internal/cli/ruleset"
-	"github.com/clintjedwards/tfvet/internal/utils"
+	"github.com/clintjedwards/tfvet/v2/internal/cli/appcfg"
+	"github.com/clintjedwards/tfvet/v2/internal/cli/rule"
+	"github.com/clintjedwards/tfvet/v2/internal/cli/ruleset"
+	"github.com/clintjedwards/tfvet/v2/internal/utils"
 	"github.com/spf13/cobra"
 )
 

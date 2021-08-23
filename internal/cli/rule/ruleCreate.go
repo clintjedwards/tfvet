@@ -7,7 +7,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/clintjedwards/tfvet/internal/utils"
+	"github.com/clintjedwards/tfvet/v2/internal/utils"
 	validation "github.com/go-ozzo/ozzo-validation"
 	"github.com/go-ozzo/ozzo-validation/is"
 	"github.com/spf13/cobra"

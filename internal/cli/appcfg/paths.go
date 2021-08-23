@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/clintjedwards/tfvet/internal/config"
+	"github.com/clintjedwards/tfvet/v2/internal/config"
 	"github.com/mitchellh/go-homedir"
 )
 

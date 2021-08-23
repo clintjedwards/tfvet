@@ -1,4 +1,4 @@
-module github.com/clintjedwards/tfvet
+module github.com/clintjedwards/tfvet/v2
 
 go 1.15
 

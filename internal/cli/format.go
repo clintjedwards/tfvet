@@ -7,7 +7,7 @@ import (
 	"strings"
 	"text/template"
 
-	models "github.com/clintjedwards/tfvet/sdk"
+	models "github.com/clintjedwards/tfvet/v2/sdk"
 	"github.com/olekukonko/tablewriter"
 )
 
