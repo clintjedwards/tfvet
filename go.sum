@@ -42,8 +42,8 @@ github.com/bketelsen/crypt v0.0.3-0.20200106085610-5cbc8cc4026c/go.mod h1:MKsuJm
 github.com/census-instrumentation/opencensus-proto v0.2.1/go.mod h1:f6KPmirojxKA12rnyqOA5BBL4O983OfeGPqjHWSTneU=
 github.com/cespare/xxhash v1.1.0/go.mod h1:XrSqR1VqqWfGrhpAt58auRo0WTKS1nRRg3ghfAqPWnc=
 github.com/client9/misspell v0.3.4/go.mod h1:qj6jICC3Q7zFZvVWo7KLAzC3yx5G7kyvSDkc90ppPyw=
-github.com/clintjedwards/polyfmt v0.1.0 h1:LuZa9czEtF3n7a0IMT9BUtSfp+QMDSYFEl4n7BKUbwI=
-github.com/clintjedwards/polyfmt v0.1.0/go.mod h1:PkxjcZixXCAekce5AE87R8OhaTcv/Wz4cEwaX0fCPgk=
+github.com/clintjedwards/polyfmt v0.3.0 h1:ji+WXUMo3RWGgX1P9fyzREQ/xSanSVXTpRwAYHW4vEw=
+github.com/clintjedwards/polyfmt v0.3.0/go.mod h1:PkxjcZixXCAekce5AE87R8OhaTcv/Wz4cEwaX0fCPgk=
 github.com/cncf/udpa/go v0.0.0-20200629203442-efcf912fb354/go.mod h1:WmhPx2Nbnhtbo57+VJT5O0JRkEi1Wbu0z5j0R8u5Hbk=
 github.com/coreos/bbolt v1.3.2/go.mod h1:iRUV2dpdMOn7Bo10OQBFzIJO9kkE559Wcmn+qkEiiKk=
 github.com/coreos/etcd v3.3.13+incompatible/go.mod h1:uF7uidLiAD3TWHmW31ZFd/JWoc32PjwdhPthX9715RE=

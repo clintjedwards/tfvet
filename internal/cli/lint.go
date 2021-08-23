@@ -13,11 +13,11 @@ import (
 	"time"
 
 	"github.com/clintjedwards/polyfmt"
-	"github.com/clintjedwards/tfvet/v2/internal/cli/appcfg"
-	tfvetPlugin "github.com/clintjedwards/tfvet/v2/internal/plugin"
-	"github.com/clintjedwards/tfvet/v2/internal/plugin/proto"
-	"github.com/clintjedwards/tfvet/v2/internal/utils"
-	models "github.com/clintjedwards/tfvet/v2/sdk"
+	"github.com/clintjedwards/tfvet/v3/internal/cli/appcfg"
+	tfvetPlugin "github.com/clintjedwards/tfvet/v3/internal/plugin"
+	"github.com/clintjedwards/tfvet/v3/internal/plugin/proto"
+	"github.com/clintjedwards/tfvet/v3/internal/utils"
+	models "github.com/clintjedwards/tfvet/v3/sdk"
 	"github.com/hashicorp/go-hclog"
 	"github.com/hashicorp/go-plugin"
 	"github.com/hashicorp/hcl/v2/hclparse"
@@ -317,7 +317,9 @@ func (s *state) runRule(ruleset string, rule models.Rule, filepath string, rawHC
 			RuleErr:  ruleError,
 		})+"\n", polyfmt.Pretty)
 
-		s.fmt.PrintErr(models.LintErrorWrapper{
+		s.fmt.PrintErr(struct {
+			LintError models.LintError `json:"lint_error"`
+		}{
 			LintError: models.LintError{
 				Filepath: filepath,
 				Line:     line,

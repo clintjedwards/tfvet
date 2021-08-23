@@ -5,8 +5,8 @@ import (
 	"log"
 
 	"github.com/Masterminds/semver"
-	"github.com/clintjedwards/tfvet/v2/internal/cli/appcfg"
-	models "github.com/clintjedwards/tfvet/v2/sdk"
+	"github.com/clintjedwards/tfvet/v3/internal/cli/appcfg"
+	models "github.com/clintjedwards/tfvet/v3/sdk"
 	"github.com/spf13/cobra"
 )
 

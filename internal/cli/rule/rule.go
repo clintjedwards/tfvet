@@ -6,7 +6,7 @@ import (
 	"log"
 
 	"github.com/clintjedwards/polyfmt"
-	"github.com/clintjedwards/tfvet/v2/internal/cli/appcfg"
+	"github.com/clintjedwards/tfvet/v3/internal/cli/appcfg"
 	"github.com/spf13/cobra"
 )
 

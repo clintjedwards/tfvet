@@ -7,7 +7,7 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/clintjedwards/tfvet/v2/internal/utils"
+	"github.com/clintjedwards/tfvet/v3/internal/utils"
 	"github.com/spf13/cobra"
 )
 

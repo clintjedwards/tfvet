@@ -1,4 +1,4 @@
-module github.com/clintjedwards/tfvet/v2
+module github.com/clintjedwards/tfvet/v3
 
 go 1.15
 
@@ -6,7 +6,7 @@ require (
 	github.com/Masterminds/semver v1.5.0
 	github.com/agext/levenshtein v1.2.3 // indirect
 	github.com/asaskevich/govalidator v0.0.0-20200108200545-475eaeb16496 // indirect
-	github.com/clintjedwards/polyfmt v0.1.0
+	github.com/clintjedwards/polyfmt v0.3.0
 	github.com/go-ozzo/ozzo-validation v3.6.0+incompatible
 	github.com/golang/protobuf v1.4.3 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect

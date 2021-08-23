@@ -3,7 +3,7 @@ package plugin
 import (
 	"context"
 
-	"github.com/clintjedwards/tfvet/v2/internal/plugin/proto"
+	"github.com/clintjedwards/tfvet/v3/internal/plugin/proto"
 	"github.com/hashicorp/go-plugin"
 	"google.golang.org/grpc"
 )

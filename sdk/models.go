@@ -2,7 +2,7 @@
 // It provides the primitives to allow for ruleset/rule creation and structs to help in parsing tfvet output.
 package sdk
 
-import proto "github.com/clintjedwards/tfvet/v2/internal/plugin/proto"
+import proto "github.com/clintjedwards/tfvet/v3/internal/plugin/proto"
 
 // Ruleset represents a packaged set of rules that govern what tfvet checks for.
 type Ruleset struct {
@@ -73,10 +73,24 @@ type RuleError struct {
 }
 
 // LintErrorWrapper is a convenience struct so that json output is easier to programmatically read.
-// Nesting the output of LintError allows parsers to quickly and easily check if a particular error in tfvet
-// output is a lint error and therefore should be processed differently.
+// Nesting the output of LintError as a pointer allows downstream programs to check if the line
+// parses cleanly into the wrapper by simply checking if the resulting object is nil
+// Example:
+//
+// A line that is not a LintError
+// err := json.Unmarshal(logLine, &newError)
+// if err != nil {
+// 	t.Fatal(err)
+// }
+//
+// if newError.Data.LintError == nil {
+// We know this is not a LintError because this is nil
+//}
 type LintErrorWrapper struct {
-	LintError LintError `json:"lint_error"`
+	Label string `json:"label"`
+	Data  struct {
+		LintError *LintError `json:"lint_error"`
+	} `json:"data"`
 }
 
 // LintError is a harness for all the details that go into a lint error
