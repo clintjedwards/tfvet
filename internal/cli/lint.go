@@ -314,7 +314,7 @@ func (s *state) runRule(ruleset string, rule models.Rule, filepath string, rawHC
 			Line:     line,
 			Ruleset:  ruleset,
 			Rule:     rule,
-			RuleErr:  ruleError,
+			RuleErr:  *models.ProtoToRuleError(ruleError),
 		})+"\n", polyfmt.Pretty)
 
 		s.fmt.PrintErr(struct {
@@ -325,7 +325,7 @@ func (s *state) runRule(ruleset string, rule models.Rule, filepath string, rawHC
 				Line:     line,
 				Ruleset:  ruleset,
 				Rule:     rule,
-				RuleErr:  ruleError,
+				RuleErr:  *models.ProtoToRuleError(ruleError),
 			},
 		}, polyfmt.JSON)
 	}
@@ -337,7 +337,6 @@ func (s *state) runRule(ruleset string, rule models.Rule, filepath string, rawHC
 // memory of the OS. If the OS does not have enough memory to read the
 // file entirely this will return an error.
 func checkAvailMemory(file *os.File) error {
-
 	v, err := mem.VirtualMemory()
 	if err != nil {
 		return err

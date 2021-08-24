@@ -2,7 +2,7 @@
 // It provides the primitives to allow for ruleset/rule creation and structs to help in parsing tfvet output.
 package sdk
 
-import proto "github.com/clintjedwards/tfvet/v3/internal/plugin/proto"
+import "github.com/clintjedwards/tfvet/v3/internal/plugin/proto"
 
 // Ruleset represents a packaged set of rules that govern what tfvet checks for.
 type Ruleset struct {
@@ -95,9 +95,27 @@ type LintErrorWrapper struct {
 
 // LintError is a harness for all the details that go into a lint error
 type LintError struct {
-	Filepath string           `json:"filepath"`
-	Line     string           `json:"line"`
-	RuleErr  *proto.RuleError `json:"rule_error"`
-	Rule     Rule             `json:"rule"`
-	Ruleset  string           `json:"ruleset"`
+	Filepath string    `json:"filepath"`
+	Line     string    `json:"line"`
+	RuleErr  RuleError `json:"rule_error"`
+	Rule     Rule      `json:"rule"`
+	Ruleset  string    `json:"ruleset"`
+}
+
+func ProtoToRuleError(proto *proto.RuleError) *RuleError {
+	re := &RuleError{}
+	re.Suggestion = proto.Suggestion
+	re.Remediation = proto.Remediation
+	re.Metadata = proto.Metadata
+	re.Location = Range{
+		Start: Position{
+			Line:   proto.Location.Start.Line,
+			Column: proto.Location.Start.Column,
+		},
+		End: Position{
+			Line:   proto.Location.End.Line,
+			Column: proto.Location.End.Column,
+		},
+	}
+	return re
 }

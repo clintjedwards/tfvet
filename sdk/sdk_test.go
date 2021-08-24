@@ -17,5 +17,4 @@ func TestLintErrorWrapper(t *testing.T) {
 	if newError.Data.LintError == nil {
 		t.Fatal("LintError which should be an object is nil")
 	}
-
 }
