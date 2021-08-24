@@ -11,7 +11,7 @@ import (
 
 	"github.com/Masterminds/semver"
 	"github.com/clintjedwards/polyfmt"
-	"github.com/clintjedwards/tfvet/v3/internal/cli/appcfg"
+	"github.com/clintjedwards/tfvet/v2/internal/cli/appcfg"
 	validation "github.com/go-ozzo/ozzo-validation"
 	"github.com/go-ozzo/ozzo-validation/is"
 	getter "github.com/hashicorp/go-getter/v2"

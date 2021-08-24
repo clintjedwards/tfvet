@@ -2,7 +2,7 @@
 // It provides the primitives to allow for ruleset/rule creation and structs to help in parsing tfvet output.
 package sdk
 
-import "github.com/clintjedwards/tfvet/v3/internal/plugin/proto"
+import "github.com/clintjedwards/tfvet/v2/internal/plugin/proto"
 
 // Ruleset represents a packaged set of rules that govern what tfvet checks for.
 type Ruleset struct {

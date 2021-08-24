@@ -8,7 +8,7 @@ import (
 	"os"
 	"strings"
 
-	models "github.com/clintjedwards/tfvet/v3/sdk"
+	models "github.com/clintjedwards/tfvet/v2/sdk"
 	"github.com/hashicorp/hcl/v2/gohcl"
 	"github.com/hashicorp/hcl/v2/hclsimple"
 	"github.com/hashicorp/hcl/v2/hclwrite"

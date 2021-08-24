@@ -9,7 +9,7 @@ import (
 	"text/template"
 
 	"github.com/clintjedwards/polyfmt"
-	models "github.com/clintjedwards/tfvet/v3/sdk"
+	models "github.com/clintjedwards/tfvet/v2/sdk"
 	"github.com/olekukonko/tablewriter"
 	"github.com/spf13/cobra"
 )

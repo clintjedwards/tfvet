@@ -3,8 +3,8 @@ package sdk
 import (
 	"log"
 
-	tfvetPlugin "github.com/clintjedwards/tfvet/v3/internal/plugin"
-	proto "github.com/clintjedwards/tfvet/v3/internal/plugin/proto"
+	tfvetPlugin "github.com/clintjedwards/tfvet/v2/internal/plugin"
+	proto "github.com/clintjedwards/tfvet/v2/internal/plugin/proto"
 	"github.com/hashicorp/go-plugin"
 	"github.com/hashicorp/hcl/v2/hclparse"
 	"github.com/hashicorp/hcl/v2/hclsyntax"
